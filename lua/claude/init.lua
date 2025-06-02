@@ -389,7 +389,14 @@ function M.setup(opts)
   end, { desc = "Kill all Claude terminals" })
 
   -- Add keymapping for quick access
-  keymap("n", "<leader>gcl", "<cmd>ClaudeList<cr>", { desc = "Claude: List terminals" })
+  keymap("n", "<leader>CL", "<cmd>ClaudeList<cr>", { desc = "Claude: List terminals" })
+  
+  -- Additional Claude commands under C prefix
+  keymap("n", "<leader>Ca", "<cmd>ClaudeAsk<cr>", { desc = "Claude: Ask custom prompt" })
+  keymap("n", "<leader>Cs", "<cmd>ClaudeShow<cr>", { desc = "Claude: Show terminals" })
+  keymap("n", "<leader>Ck", "<cmd>ClaudeKillAll<cr>", { desc = "Claude: Kill all terminals" })
+  keymap("n", "<leader>Ce", "<cmd>ClaudeExplain<cr>", { desc = "Claude: Explain current line" })
+  keymap("n", "<leader>Cd", "<cmd>ClaudeDebug<cr>", { desc = "Claude: Debug current file" })
 
   -- Command for custom Claude prompts
   vim.api.nvim_create_user_command("ClaudeAsk", function(opts)
