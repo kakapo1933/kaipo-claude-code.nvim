@@ -67,7 +67,12 @@ use {
 
 - `<leader>cb` - Review entire buffer
 - `<leader>ch` - Get help with error messages
-- `<leader>gcl` - List and reconnect to active Claude terminals
+- `<leader>CL` - List and reconnect to active Claude terminals
+- `<leader>Ca` - Ask custom prompt
+- `<leader>Cs` - Show active terminals
+- `<leader>Ck` - Kill all terminals
+- `<leader>Ce` - Explain current line
+- `<leader>Cd` - Debug current file
 
 ### Commands
 
