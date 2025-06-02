@@ -53,26 +53,26 @@ use {
 
 ## Usage
 
-### Visual Mode Commands
+### Visual Mode Commands (Claude Code)
 
-- `<leader>ce` - Explain selected code
-- `<leader>cr` - Review selected code for bugs and improvements
-- `<leader>co` - Optimize selected code
-- `<leader>cf` - Refactor selected code for readability
-- `<leader>ct` - Generate unit tests for selected code
-- `<leader>cd` - Add comprehensive comments to selected code
-- `<leader>cp` - Custom prompt for selected code
+- `<leader>Ce` - Explain selected code
+- `<leader>Cr` - Review selected code for bugs and improvements
+- `<leader>Co` - Optimize selected code
+- `<leader>Cf` - Refactor selected code for readability
+- `<leader>Ct` - Generate unit tests for selected code
+- `<leader>Cd` - Add comprehensive comments to selected code
+- `<leader>Cp` - Custom prompt for selected code
 
-### Normal Mode Commands
+### Normal Mode Commands (Claude Code)
 
-- `<leader>cb` - Review entire buffer
-- `<leader>ch` - Get help with error messages
+- `<leader>Cb` - Review entire buffer
+- `<leader>Ch` - Get help with error messages
 - `<leader>CL` - List and reconnect to active Claude terminals
 - `<leader>Ca` - Ask custom prompt
 - `<leader>Cs` - Show active terminals
 - `<leader>Ck` - Kill all terminals
-- `<leader>Ce` - Explain current line
-- `<leader>Cd` - Debug current file
+- `<leader>Cx` - Explain current line
+- `<leader>Cg` - Debug current file
 
 ### Commands
 
@@ -83,6 +83,22 @@ use {
 - `:ClaudeShow` - Show active terminals (display only)
 - `:ClaudeKillAll` - Kill all active Claude terminals
 - `:ClaudeDebugState` - Debug plugin state
+
+### Window Controls
+
+When a Claude popup window appears:
+
+1. **Terminal Mode** (default): You can see Claude's live output
+   - Press `<Esc>` to enter normal mode
+   
+2. **Normal Mode**: Navigate and control the window
+   - Press `q` to close the window
+   - Use standard Vim commands (`:close`, `<C-w>c`, etc.)
+   - Press `i` or `a` to return to terminal mode (if process is still running)
+
+3. **ClaudeList Window**: Select from active terminals
+   - Press number keys (1, 2, 3...) to reconnect to a terminal
+   - Press `q` to cancel and close the list
 
 ## Configuration
 
@@ -99,8 +115,8 @@ require("claude").setup({
 ### Floating Terminal Interface
 - Clean, bordered floating windows
 - Automatic sizing (80% of editor dimensions)
-- Terminal mode with easy exit (`Esc` key)
-- Press `q` or `Esc` to close completed sessions
+- Terminal mode with easy exit (`Esc` enters normal mode)
+- Press `q` in normal mode to close windows
 
 ### Terminal Management
 - Track multiple concurrent Claude sessions

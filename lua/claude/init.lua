@@ -29,7 +29,7 @@ function M.create_claude_terminal(command, prompt, temp_file)
 
   local buf = vim.api.nvim_create_buf(false, true)
 
-  local opts = {
+  local window_config = {
     relative = "editor",
     width = width,
     height = height,
@@ -41,16 +41,15 @@ function M.create_claude_terminal(command, prompt, temp_file)
     title_pos = "center",
   }
 
-  local win = vim.api.nvim_open_win(buf, true, opts)
+  local win = vim.api.nvim_open_win(buf, true, window_config)
 
   -- Key mappings for the floating terminal
   vim.keymap.set("n", "q", "<cmd>close<cr>", { buffer = buf, noremap = true, silent = true })
-  vim.keymap.set("n", "<Esc>", "<cmd>close<cr>", { buffer = buf, noremap = true, silent = true })
   vim.keymap.set("t", "<Esc>", "<C-\\><C-n>", { buffer = buf, noremap = true, silent = true })
 
   -- Start terminal in the buffer
   local job_id = vim.fn.termopen(command, {
-    on_exit = function(_, exit_code)
+    on_exit = function(_, exit_code, _)
       if exit_code == 0 then
         -- Add instruction at the end (check if buffer is still modifiable)
         pcall(function()
@@ -120,48 +119,48 @@ function M.setup(opts)
   local keymap = vim.keymap.set
 
   -- Send selection for explanation
-  keymap("v", "<leader>ce", M.send_to_claude("Explain this code"), { desc = "Claude: Explain selection" })
+  keymap("v", "<leader>Ce", M.send_to_claude("Explain this code"), { desc = "[Claude Code] Explain selection" })
 
   -- Send selection for review
   keymap(
     "v",
-    "<leader>cr",
+    "<leader>Cr",
     M.send_to_claude("Review this code for bugs and improvements"),
-    { desc = "Claude: Review selection" }
+    { desc = "[Claude Code] Review selection" }
   )
 
   -- Send selection for optimization
-  keymap("v", "<leader>co", M.send_to_claude("Optimize this code"), { desc = "Claude: Optimize selection" })
+  keymap("v", "<leader>Co", M.send_to_claude("Optimize this code"), { desc = "[Claude Code] Optimize selection" })
 
   -- Send selection for refactoring
   keymap(
     "v",
-    "<leader>cf",
+    "<leader>Cf",
     M.send_to_claude("Refactor this code to be more readable"),
-    { desc = "Claude: Refactor selection" }
+    { desc = "[Claude Code] Refactor selection" }
   )
 
   -- Send selection for testing
-  keymap("v", "<leader>ct", M.send_to_claude("Write unit tests for this code"), { desc = "Claude: Generate tests" })
+  keymap("v", "<leader>Ct", M.send_to_claude("Write unit tests for this code"), { desc = "[Claude Code] Generate tests" })
 
   -- Send selection for documentation
   keymap(
     "v",
-    "<leader>cd",
+    "<leader>Cd",
     M.send_to_claude("Add comprehensive comments to this code"),
-    { desc = "Claude: Add documentation" }
+    { desc = "[Claude Code] Add documentation" }
   )
 
   -- Send selection with custom prompt
-  keymap("v", "<leader>cp", function()
+  keymap("v", "<leader>Cp", function()
     local prompt = vim.fn.input("Claude prompt: ")
     if prompt ~= "" then
       M.send_to_claude(prompt)()
     end
-  end, { desc = "Claude: Custom prompt" })
+  end, { desc = "[Claude Code] Custom prompt" })
 
   -- Send entire buffer to Claude
-  keymap("n", "<leader>cb", function()
+  keymap("n", "<leader>Cb", function()
     if not check_claude_code() then
       return
     end
@@ -171,7 +170,7 @@ function M.setup(opts)
     local command =
       string.format("echo %s | cat - %s | claude", vim.fn.shellescape("Review this entire file:"), escaped_filename)
     M.create_claude_terminal(command, "Review this entire file")
-  end, { desc = "Claude: Review entire file" })
+  end, { desc = "[Claude Code] Review entire file" })
 
   -- Quick commands for common tasks
   vim.api.nvim_create_user_command("ClaudeExplain", function()
@@ -224,7 +223,7 @@ function M.setup(opts)
   end, { desc = "Debug current file with Claude" })
 
   -- Function to get Claude help for error messages
-  keymap("n", "<leader>ch", function()
+  keymap("n", "<leader>Ch", function()
     if not check_claude_code() then
       return
     end
@@ -258,7 +257,7 @@ function M.setup(opts)
         vim.notify("Error creating temporary file", vim.log.levels.ERROR)
       end
     end
-  end, { desc = "Claude: Help with error" })
+  end, { desc = "[Claude Code] Help with error" })
 
   -- Command to list active Claude terminals
   vim.api.nvim_create_user_command("ClaudeList", function()
@@ -313,7 +312,7 @@ function M.setup(opts)
     local row = math.floor((vim.o.lines - height) / 2)
     local col = math.floor((vim.o.columns - width) / 2)
 
-    local opts = {
+    local list_window_config = {
       relative = "editor",
       width = width,
       height = height,
@@ -325,7 +324,7 @@ function M.setup(opts)
       title_pos = "center",
     }
 
-    local win = vim.api.nvim_open_win(buf, true, opts)
+    local win = vim.api.nvim_open_win(buf, true, list_window_config)
 
     -- Set up key mappings for selection
     local function close_and_select(choice_num)
@@ -338,7 +337,7 @@ function M.setup(opts)
         local term_row = math.floor((vim.o.lines - term_height) / 2)
         local term_col = math.floor((vim.o.columns - term_width) / 2)
 
-        local term_opts = {
+        local terminal_window_config = {
           relative = "editor",
           width = term_width,
           height = term_height,
@@ -350,11 +349,10 @@ function M.setup(opts)
           title_pos = "center",
         }
 
-        vim.api.nvim_open_win(selected.buf, true, term_opts)
+        vim.api.nvim_open_win(selected.buf, true, terminal_window_config)
 
         -- Set up keymaps for the reconnected window
         vim.keymap.set("n", "q", "<cmd>close<cr>", { buffer = selected.buf, noremap = true, silent = true })
-        vim.keymap.set("n", "<Esc>", "<cmd>close<cr>", { buffer = selected.buf, noremap = true, silent = true })
         vim.keymap.set("t", "<Esc>", "<C-\\><C-n>", { buffer = selected.buf, noremap = true, silent = true })
       end
     end
@@ -365,10 +363,6 @@ function M.setup(opts)
         close_and_select(i)
       end, { buffer = buf, noremap = true, silent = true })
     end
-
-    vim.keymap.set("n", "<Esc>", function()
-      vim.api.nvim_win_close(win, true)
-    end, { buffer = buf, noremap = true, silent = true })
 
     vim.keymap.set("n", "q", function()
       vim.api.nvim_win_close(win, true)
@@ -388,23 +382,24 @@ function M.setup(opts)
     print(string.format("Killed %d Claude terminal(s)", count))
   end, { desc = "Kill all Claude terminals" })
 
+  -- Set up keymap group for Claude commands will be done after all keymaps
+
   -- Add keymapping for quick access
-  keymap("n", "<leader>CL", "<cmd>ClaudeList<cr>", { desc = "Claude: List terminals" })
-  
+  keymap("n", "<leader>CL", "<cmd>ClaudeList<cr>", { desc = "[Claude Code] List terminals" })
   -- Additional Claude commands under C prefix
-  keymap("n", "<leader>Ca", "<cmd>ClaudeAsk<cr>", { desc = "Claude: Ask custom prompt" })
-  keymap("n", "<leader>Cs", "<cmd>ClaudeShow<cr>", { desc = "Claude: Show terminals" })
-  keymap("n", "<leader>Ck", "<cmd>ClaudeKillAll<cr>", { desc = "Claude: Kill all terminals" })
-  keymap("n", "<leader>Ce", "<cmd>ClaudeExplain<cr>", { desc = "Claude: Explain current line" })
-  keymap("n", "<leader>Cd", "<cmd>ClaudeDebug<cr>", { desc = "Claude: Debug current file" })
+  keymap("n", "<leader>Ca", "<cmd>ClaudeAsk<cr>", { desc = "[Claude Code] Ask custom prompt" })
+  keymap("n", "<leader>Cs", "<cmd>ClaudeShow<cr>", { desc = "[Claude Code] Show terminals" })
+  keymap("n", "<leader>Ck", "<cmd>ClaudeKillAll<cr>", { desc = "[Claude Code] Kill all terminals" })
+  keymap("n", "<leader>Cx", "<cmd>ClaudeExplain<cr>", { desc = "[Claude Code] Explain current line" })
+  keymap("n", "<leader>Cg", "<cmd>ClaudeDebug<cr>", { desc = "[Claude Code] Debug current file" })
 
   -- Command for custom Claude prompts
-  vim.api.nvim_create_user_command("ClaudeAsk", function(opts)
+  vim.api.nvim_create_user_command("ClaudeAsk", function(cmd_opts)
     if not check_claude_code() then
       return
     end
 
-    local prompt = opts.args
+    local prompt = cmd_opts.args
     if prompt == "" then
       prompt = vim.fn.input("Claude prompt: ")
       if prompt == "" then
@@ -538,6 +533,20 @@ function M.setup(opts)
     end
     print(string.format("Total: %d terminals in global state", count))
   end, { desc = "Debug Claude terminal global state" })
+  -- Register Claude group with which-key
+  vim.schedule(function()
+    local ok, wk = pcall(require, 'which-key')
+    if ok and wk and wk.register then
+      wk.register({
+        ["<leader>C"] = { name = "+Claude Code" },
+      })
+      
+      -- Register for visual mode
+      wk.register({
+        ["<leader>C"] = { name = "+Claude Code" },
+      }, { mode = "v" })
+    end
+  end)
 end
 
 return M
