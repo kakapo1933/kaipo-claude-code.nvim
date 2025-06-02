@@ -536,15 +536,10 @@ function M.setup(opts)
   -- Register Claude group with which-key
   vim.schedule(function()
     local ok, wk = pcall(require, 'which-key')
-    if ok and wk and wk.register then
-      wk.register({
-        ["<leader>C"] = { name = "+Claude Code" },
+    if ok and wk and wk.add then
+      wk.add({
+        { "<leader>C", group = "Claude Code" },
       })
-      
-      -- Register for visual mode
-      wk.register({
-        ["<leader>C"] = { name = "+Claude Code" },
-      }, { mode = "v" })
     end
   end)
 end
