@@ -103,10 +103,25 @@ function M.send_to_claude(prompt)
       file:close()
 
       -- Create floating terminal with Claude command (sanitized)
-      local escaped_prompt = vim.fn.shellescape(prompt .. ":")
-      local escaped_temp_file = vim.fn.shellescape(temp_file)
-      local command = string.format("echo %s | cat - %s | claude", escaped_prompt, escaped_temp_file)
-      M.create_claude_terminal(command, prompt, temp_file)
+      -- Write prompt to temp file to avoid pipe issues
+      local prompt_file = string.format("/tmp/nvim_claude_prompt_%s.txt", session_id)
+      local prompt_handle = io.open(prompt_file, "w")
+      if prompt_handle then
+        prompt_handle:write(prompt .. ":\n\n")
+        prompt_handle:close()
+        
+        local escaped_prompt_file = vim.fn.shellescape(prompt_file)
+        local escaped_temp_file = vim.fn.shellescape(temp_file)
+        local command = string.format("cat %s %s | claude", escaped_prompt_file, escaped_temp_file)
+        M.create_claude_terminal(command, prompt, temp_file)
+        
+        -- Clean up prompt file after a delay
+        vim.defer_fn(function()
+          pcall(function() os.remove(prompt_file) end)
+        end, 1000)
+      else
+        vim.notify("Error creating prompt file", vim.log.levels.ERROR)
+      end
     else
       vim.notify("Error creating temporary file", vim.log.levels.ERROR)
     end
@@ -167,9 +182,25 @@ function M.setup(opts)
 
     local filename = vim.fn.expand("%")
     local escaped_filename = vim.fn.shellescape(filename)
-    local command =
-      string.format("echo %s | cat - %s | claude", vim.fn.shellescape("Review this entire file:"), escaped_filename)
-    M.create_claude_terminal(command, "Review this entire file")
+    -- Create prompt file to avoid pipe issues
+    local session_id = os.time() .. "_" .. math.random(1000, 9999)
+    local prompt_file = string.format("/tmp/nvim_claude_prompt_%s.txt", session_id)
+    local prompt_handle = io.open(prompt_file, "w")
+    if prompt_handle then
+      prompt_handle:write("Review this entire file:\n\n")
+      prompt_handle:close()
+      
+      local escaped_prompt_file = vim.fn.shellescape(prompt_file)
+      local command = string.format("cat %s %s | claude", escaped_prompt_file, escaped_filename)
+      M.create_claude_terminal(command, "Review this entire file")
+      
+      -- Clean up prompt file after a delay
+      vim.defer_fn(function()
+        pcall(function() os.remove(prompt_file) end)
+      end, 1000)
+    else
+      vim.notify("Error creating prompt file", vim.log.levels.ERROR)
+    end
   end, { desc = "[Claude Code] Review entire file" })
 
   -- Quick commands for common tasks
@@ -189,13 +220,25 @@ function M.setup(opts)
       end)
 
       if write_success then
-        local escaped_temp_file = vim.fn.shellescape(temp_file)
-        local command = string.format(
-          "echo %s | cat - %s | claude",
-          vim.fn.shellescape("Explain this line of code:"),
-          escaped_temp_file
-        )
-        M.create_claude_terminal(command, "Explain this line of code", temp_file)
+        -- Create prompt file to avoid pipe issues
+        local prompt_file = string.format("/tmp/nvim_claude_prompt_line_%s.txt", session_id)
+        local prompt_handle = io.open(prompt_file, "w")
+        if prompt_handle then
+          prompt_handle:write("Explain this line of code:\n\n")
+          prompt_handle:close()
+          
+          local escaped_prompt_file = vim.fn.shellescape(prompt_file)
+          local escaped_temp_file = vim.fn.shellescape(temp_file)
+          local command = string.format("cat %s %s | claude", escaped_prompt_file, escaped_temp_file)
+          M.create_claude_terminal(command, "Explain this line of code", temp_file)
+          
+          -- Clean up prompt file after a delay
+          vim.defer_fn(function()
+            pcall(function() os.remove(prompt_file) end)
+          end, 1000)
+        else
+          vim.notify("Error creating prompt file", vim.log.levels.ERROR)
+        end
       else
         vim.notify("Error writing to temporary file: " .. (write_err or "unknown"), vim.log.levels.ERROR)
         pcall(function()
@@ -215,11 +258,26 @@ function M.setup(opts)
     local filename = vim.fn.expand("%")
     local line_num = vim.fn.line(".")
     local debug_prompt = string.format("Debug this file, focus on line %d", line_num)
-    local escaped_debug_prompt = vim.fn.shellescape(debug_prompt .. ":")
-    local escaped_filename = vim.fn.shellescape(filename)
-    local command = string.format("echo %s | cat - %s | claude", escaped_debug_prompt, escaped_filename)
-
-    M.create_claude_terminal(command, debug_prompt)
+    -- Create prompt file to avoid pipe issues
+    local session_id = os.time() .. "_" .. math.random(1000, 9999)
+    local prompt_file = string.format("/tmp/nvim_claude_prompt_debug_%s.txt", session_id)
+    local prompt_handle = io.open(prompt_file, "w")
+    if prompt_handle then
+      prompt_handle:write(debug_prompt .. ":\n\n")
+      prompt_handle:close()
+      
+      local escaped_prompt_file = vim.fn.shellescape(prompt_file)
+      local escaped_filename = vim.fn.shellescape(filename)
+      local command = string.format("cat %s %s | claude", escaped_prompt_file, escaped_filename)
+      M.create_claude_terminal(command, debug_prompt)
+      
+      -- Clean up prompt file after a delay
+      vim.defer_fn(function()
+        pcall(function() os.remove(prompt_file) end)
+      end, 1000)
+    else
+      vim.notify("Error creating prompt file", vim.log.levels.ERROR)
+    end
   end, { desc = "Debug current file with Claude" })
 
   -- Function to get Claude help for error messages
@@ -240,13 +298,25 @@ function M.setup(opts)
         end)
 
         if write_success then
-          local escaped_temp_file = vim.fn.shellescape(temp_file)
-          local command = string.format(
-            "echo %s | cat - %s | claude",
-            vim.fn.shellescape("Help me fix this error:"),
-            escaped_temp_file
-          )
-          M.create_claude_terminal(command, "Help me fix this error", temp_file)
+          -- Create prompt file to avoid pipe issues
+          local prompt_file = string.format("/tmp/nvim_claude_prompt_error_%s.txt", session_id)
+          local prompt_handle = io.open(prompt_file, "w")
+          if prompt_handle then
+            prompt_handle:write("Help me fix this error:\n\n")
+            prompt_handle:close()
+            
+            local escaped_prompt_file = vim.fn.shellescape(prompt_file)
+            local escaped_temp_file = vim.fn.shellescape(temp_file)
+            local command = string.format("cat %s %s | claude", escaped_prompt_file, escaped_temp_file)
+            M.create_claude_terminal(command, "Help me fix this error", temp_file)
+            
+            -- Clean up prompt file after a delay
+            vim.defer_fn(function()
+              pcall(function() os.remove(prompt_file) end)
+            end, 1000)
+          else
+            vim.notify("Error creating prompt file", vim.log.levels.ERROR)
+          end
         else
           vim.notify("Error writing to temporary file: " .. (write_err or "unknown"), vim.log.levels.ERROR)
           pcall(function()
@@ -439,11 +509,26 @@ function M.setup(opts)
       end)
 
       if write_success then
-        local escaped_prompt = vim.fn.shellescape(prompt .. ":")
-        local escaped_temp_file = vim.fn.shellescape(temp_file)
-        local command = string.format("echo %s | cat - %s | claude", escaped_prompt, escaped_temp_file)
-        local display_prompt = has_selection and (prompt .. " (selection)") or (prompt .. " (buffer)")
-        M.create_claude_terminal(command, display_prompt, temp_file)
+        -- Create prompt file to avoid pipe issues
+        local prompt_file = string.format("/tmp/nvim_claude_prompt_ask_%s.txt", session_id)
+        local prompt_handle = io.open(prompt_file, "w")
+        if prompt_handle then
+          prompt_handle:write(prompt .. ":\n\n")
+          prompt_handle:close()
+          
+          local escaped_prompt_file = vim.fn.shellescape(prompt_file)
+          local escaped_temp_file = vim.fn.shellescape(temp_file)
+          local command = string.format("cat %s %s | claude", escaped_prompt_file, escaped_temp_file)
+          local display_prompt = has_selection and (prompt .. " (selection)") or (prompt .. " (buffer)")
+          M.create_claude_terminal(command, display_prompt, temp_file)
+          
+          -- Clean up prompt file after a delay
+          vim.defer_fn(function()
+            pcall(function() os.remove(prompt_file) end)
+          end, 1000)
+        else
+          vim.notify("Error creating prompt file", vim.log.levels.ERROR)
+        end
       else
         vim.notify("Error writing to temporary file: " .. (write_err or "unknown"), vim.log.levels.ERROR)
         pcall(function()

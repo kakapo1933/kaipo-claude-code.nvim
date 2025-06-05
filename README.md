@@ -141,6 +141,12 @@ Ensure the temporary directory (`/tmp`) is writable:
 ls -la /tmp
 ```
 
+### TTY/Terminal Issues
+If you encounter "Raw mode is not supported" errors:
+- This plugin has been updated to work without TTY requirements
+- The plugin now uses file-based input instead of pipes
+- If issues persist, ensure you're running Neovim in a proper terminal
+
 ## Contributing
 
 1. Fork the repository
