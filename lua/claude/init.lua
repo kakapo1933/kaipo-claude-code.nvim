@@ -636,15 +636,28 @@ function M.setup(opts)
 		print(string.format("Total: %d terminals in global state", count))
 	end, { desc = "Debug Claude terminal global state" })
 	-- Register Claude group with which-key
-	vim.schedule(function()
-		local ok, wk = pcall(require, "which-key")
-		if ok and wk and wk.add then
-			wk.add({
-				{ "<leader>C", group = "Claude Code", mode = "n" },
-				{ "<leader>C", group = "Claude Code", mode = "v" },
-			})
-		end
-	end)
+	-- Use autocmd to ensure which-key is loaded
+	vim.api.nvim_create_autocmd("User", {
+		pattern = "LazyLoad",
+		callback = function(event)
+			if event.data == "which-key.nvim" then
+				local ok, wk = pcall(require, "which-key")
+				if ok and wk and wk.add then
+					wk.add({
+						{ "<leader>C", group = "Claude Code", mode = { "n", "v" } },
+					})
+				end
+			end
+		end,
+	})
+	
+	-- Also try immediate registration in case which-key is already loaded
+	local ok, wk = pcall(require, "which-key")
+	if ok and wk and wk.add then
+		wk.add({
+			{ "<leader>C", group = "Claude Code", mode = { "n", "v" } },
+		})
+	end
 end
 
 return M

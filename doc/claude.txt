@@ -1,0 +1,65 @@
+*claude.txt*    Claude Code integration for Neovim
+
+CLAUDE CODE                                           *claude* *claude-code*
+
+A Neovim plugin for integrating Claude Code into your workflow.
+
+==============================================================================
+CONTENTS                                                    *claude-contents*
+
+1. Introduction ................................ |claude-introduction|
+2. Commands .................................... |claude-commands|
+3. Mappings .................................... |claude-mappings|
+
+==============================================================================
+INTRODUCTION                                            *claude-introduction*
+
+This plugin provides integration with Claude Code, allowing you to interact
+with Claude directly from Neovim through floating terminal windows.
+
+==============================================================================
+COMMANDS                                                    *claude-commands*
+
+:ClaudeAsk {prompt}                                              *:ClaudeAsk*
+    Send a custom prompt to Claude.
+
+:ClaudeExplain                                                *:ClaudeExplain*
+    Explain the current line of code.
+
+:ClaudeDebug                                                    *:ClaudeDebug*
+    Debug the current file, focusing on the current line.
+
+:ClaudeList                                                      *:ClaudeList*
+    Show an interactive list of active Claude terminals.
+
+:ClaudeShow                                                      *:ClaudeShow*
+    Display the status of all active Claude terminals.
+
+:ClaudeKillAll                                                *:ClaudeKillAll*
+    Terminate all active Claude sessions.
+
+==============================================================================
+MAPPINGS                                                    *claude-mappings*
+
+Normal mode mappings (default prefix: <leader>C):
+
+<leader>Ca    Ask Claude a custom question
+<leader>Cb    Review the entire buffer
+<leader>Ch    Get help with error messages
+<leader>CL    List and reconnect to active terminals
+<leader>Cs    Show active Claude terminals
+<leader>Ck    Kill all Claude terminals
+<leader>Cx    Explain the current line
+<leader>Cg    Debug the current file
+
+Visual mode mappings:
+
+<leader>Ce    Explain the selected code
+<leader>Cr    Review the selected code for bugs/improvements
+<leader>Co    Optimize the selected code
+<leader>Cf    Refactor the selected code for readability
+<leader>Ct    Generate unit tests for the selected code
+<leader>Cd    Add documentation/comments to the selected code
+<leader>Cp    Send a custom prompt about the selected code
+
+vim:tw=78:ts=8:ft=help:norl:
