@@ -124,6 +124,11 @@ require("claude").setup({
 - Automatic cleanup of finished processes
 - Session age tracking
 
+### Which-Key Integration
+- Automatic integration with which-key.nvim for organized keybinding display
+- Groups commands under `<leader>C` with proper labeling
+- Works with lazy loading and immediate registration
+
 ### Security Features
 - Sanitized shell command execution
 - Automatic temporary file cleanup

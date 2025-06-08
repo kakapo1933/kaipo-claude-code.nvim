@@ -1,0 +1,13 @@
+:ClaudeAsk	claude.txt	/*:ClaudeAsk*
+:ClaudeDebug	claude.txt	/*:ClaudeDebug*
+:ClaudeExplain	claude.txt	/*:ClaudeExplain*
+:ClaudeKillAll	claude.txt	/*:ClaudeKillAll*
+:ClaudeList	claude.txt	/*:ClaudeList*
+:ClaudeShow	claude.txt	/*:ClaudeShow*
+claude	claude.txt	/*claude*
+claude-code	claude.txt	/*claude-code*
+claude-commands	claude.txt	/*claude-commands*
+claude-contents	claude.txt	/*claude-contents*
+claude-introduction	claude.txt	/*claude-introduction*
+claude-mappings	claude.txt	/*claude-mappings*
+claude.txt	claude.txt	/*claude.txt*
