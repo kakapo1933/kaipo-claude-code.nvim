@@ -15,7 +15,7 @@ CONTENTS                                                    *claude-contents*
 INTRODUCTION                                            *claude-introduction*
 
 This plugin provides integration with Claude Code, allowing you to interact
-with Claude directly from Neovim through floating terminal windows.
+with Claude directly from Neovim through right-side split terminal windows.
 
 ==============================================================================
 COMMANDS                                                    *claude-commands*
@@ -31,6 +31,7 @@ COMMANDS                                                    *claude-commands*
 
 :ClaudeList                                                      *:ClaudeList*
     Show an interactive list of active Claude terminals.
+    Press number keys or <Enter> to select, 'q' to close.
 
 :ClaudeShow                                                      *:ClaudeShow*
     Display the status of all active Claude terminals.

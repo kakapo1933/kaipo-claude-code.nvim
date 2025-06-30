@@ -1,10 +1,10 @@
 # kaipo-claude-code.nvim
 
-A Neovim plugin for seamless Claude Code integration with floating terminal windows.
+A Neovim plugin for seamless Claude Code integration with split terminal windows.
 
 ## Features
 
-- **Floating Terminal Interface**: Clean, non-intrusive floating windows for Claude Code interactions
+- **Split Terminal Interface**: Clean, right-side split windows for Claude Code interactions (40% width)
 - **Multiple Task Types**: Built-in prompts for code explanation, review, optimization, refactoring, testing, and documentation
 - **Terminal Management**: List, reconnect to, and manage multiple active Claude sessions
 - **Custom Prompts**: Send any custom prompt to Claude Code with current buffer or selection
@@ -86,7 +86,7 @@ use {
 
 ### Window Controls
 
-When a Claude popup window appears:
+When a Claude split window appears:
 
 1. **Terminal Mode** (default): You can see Claude's live output
    - Press `<Esc>` to enter normal mode
@@ -98,6 +98,7 @@ When a Claude popup window appears:
 
 3. **ClaudeList Window**: Select from active terminals
    - Press number keys (1, 2, 3...) to reconnect to a terminal
+   - Press `<Enter>` to select the terminal on the current cursor line
    - Press `q` to cancel and close the list
 
 ## Configuration
@@ -112,9 +113,9 @@ require("claude").setup({
 
 ## Key Features
 
-### Floating Terminal Interface
-- Clean, bordered floating windows
-- Automatic sizing (80% of editor dimensions)
+### Split Terminal Interface
+- Clean, right-side vertical split windows
+- Automatic sizing (40% of editor width)
 - Terminal mode with easy exit (`Esc` enters normal mode)
 - Press `q` in normal mode to close windows
 

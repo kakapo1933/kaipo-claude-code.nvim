@@ -20,30 +20,29 @@ local function check_claude_code()
 	return true
 end
 
--- Function to create a floating terminal window for Claude processing
+-- Function to create a vertical split terminal window for Claude processing
 function M.create_claude_terminal(command, prompt, temp_file)
-	local width = math.floor(vim.o.columns * 0.8)
-	local height = math.floor(vim.o.lines * 0.8)
-	local row = math.floor((vim.o.lines - height) / 2)
-	local col = math.floor((vim.o.columns - width) / 2)
-
+	-- Save current window
+	local current_win = vim.api.nvim_get_current_win()
+	
+	-- Create a vertical split on the right
+	vim.cmd("vsplit")
+	vim.cmd("wincmd L") -- Move to the rightmost position
+	
+	-- Set window width to 40% of screen
+	local width = math.floor(vim.o.columns * 0.4)
+	vim.cmd("vertical resize " .. width)
+	
 	local buf = vim.api.nvim_create_buf(false, true)
-
-	local window_config = {
-		relative = "editor",
-		width = width,
-		height = height,
-		row = row,
-		col = col,
-		style = "minimal",
-		border = "rounded",
-		title = " Claude Processing: " .. prompt .. " ",
-		title_pos = "center",
-	}
-
-	local win = vim.api.nvim_open_win(buf, true, window_config)
-
-	-- Key mappings for the floating terminal
+	local win = vim.api.nvim_get_current_win()
+	
+	-- Set buffer in the window
+	vim.api.nvim_win_set_buf(win, buf)
+	
+	-- Set window title
+	vim.wo[win].statusline = "%#Title# Claude: " .. prompt .. " %#Normal#"
+	
+	-- Key mappings for the terminal
 	vim.keymap.set("n", "q", "<cmd>close<cr>", { buffer = buf, noremap = true, silent = true })
 	vim.keymap.set("t", "<Esc>", "<C-\\><C-n>", { buffer = buf, noremap = true, silent = true })
 
@@ -110,15 +109,19 @@ function M.send_to_claude(prompt)
 				prompt_handle:write(prompt .. ":\n\n")
 				prompt_handle:close()
 
-				local escaped_prompt_file = vim.fn.shellescape(prompt_file)
-				local escaped_temp_file = vim.fn.shellescape(temp_file)
-				local command = string.format("cat %s %s | claude", escaped_prompt_file, escaped_temp_file)
-				M.create_claude_terminal(command, prompt, temp_file)
+				-- Merge prompt and content into single file for Claude
+				local merged_file = string.format("/tmp/nvim_claude_merged_%s.txt", session_id)
+				local merge_cmd = string.format("cat %s %s > %s", vim.fn.shellescape(prompt_file), vim.fn.shellescape(temp_file), vim.fn.shellescape(merged_file))
+				vim.fn.system(merge_cmd)
+				
+				local command = string.format("claude < %s", vim.fn.shellescape(merged_file))
+				M.create_claude_terminal(command, prompt, merged_file)
 
-				-- Clean up prompt file after a delay
+				-- Clean up prompt and temp files after a delay
 				vim.defer_fn(function()
 					pcall(function()
 						os.remove(prompt_file)
+						os.remove(temp_file)
 					end)
 				end, 1000)
 			else
@@ -197,9 +200,13 @@ function M.setup(opts)
 			prompt_handle:write("Review this entire file:\n\n")
 			prompt_handle:close()
 
-			local escaped_prompt_file = vim.fn.shellescape(prompt_file)
-			local command = string.format("cat %s %s | claude", escaped_prompt_file, escaped_filename)
-			M.create_claude_terminal(command, "Review this entire file")
+			-- Merge prompt and file content into single file for Claude
+			local merged_file = string.format("/tmp/nvim_claude_merged_%s.txt", session_id)
+			local merge_cmd = string.format("cat %s %s > %s", vim.fn.shellescape(prompt_file), escaped_filename, vim.fn.shellescape(merged_file))
+			vim.fn.system(merge_cmd)
+			
+			local command = string.format("claude < %s", vim.fn.shellescape(merged_file))
+			M.create_claude_terminal(command, "Review this entire file", merged_file)
 
 			-- Clean up prompt file after a delay
 			vim.defer_fn(function()
@@ -236,15 +243,19 @@ function M.setup(opts)
 					prompt_handle:write("Explain this line of code:\n\n")
 					prompt_handle:close()
 
-					local escaped_prompt_file = vim.fn.shellescape(prompt_file)
-					local escaped_temp_file = vim.fn.shellescape(temp_file)
-					local command = string.format("cat %s %s | claude", escaped_prompt_file, escaped_temp_file)
-					M.create_claude_terminal(command, "Explain this line of code", temp_file)
+					-- Merge prompt and content into single file for Claude
+					local merged_file = string.format("/tmp/nvim_claude_merged_line_%s.txt", session_id)
+					local merge_cmd = string.format("cat %s %s > %s", vim.fn.shellescape(prompt_file), vim.fn.shellescape(temp_file), vim.fn.shellescape(merged_file))
+					vim.fn.system(merge_cmd)
+					
+					local command = string.format("claude < %s", vim.fn.shellescape(merged_file))
+					M.create_claude_terminal(command, "Explain this line of code", merged_file)
 
-					-- Clean up prompt file after a delay
+					-- Clean up prompt and temp files after a delay
 					vim.defer_fn(function()
 						pcall(function()
 							os.remove(prompt_file)
+							os.remove(temp_file)
 						end)
 					end, 1000)
 				else
@@ -277,10 +288,13 @@ function M.setup(opts)
 			prompt_handle:write(debug_prompt .. ":\n\n")
 			prompt_handle:close()
 
-			local escaped_prompt_file = vim.fn.shellescape(prompt_file)
-			local escaped_filename = vim.fn.shellescape(filename)
-			local command = string.format("cat %s %s | claude", escaped_prompt_file, escaped_filename)
-			M.create_claude_terminal(command, debug_prompt)
+			-- Merge prompt and file content into single file for Claude
+			local merged_file = string.format("/tmp/nvim_claude_merged_debug_%s.txt", session_id)
+			local merge_cmd = string.format("cat %s %s > %s", vim.fn.shellescape(prompt_file), vim.fn.shellescape(filename), vim.fn.shellescape(merged_file))
+			vim.fn.system(merge_cmd)
+			
+			local command = string.format("claude < %s", vim.fn.shellescape(merged_file))
+			M.create_claude_terminal(command, debug_prompt, merged_file)
 
 			-- Clean up prompt file after a delay
 			vim.defer_fn(function()
@@ -318,15 +332,19 @@ function M.setup(opts)
 						prompt_handle:write("Help me fix this error:\n\n")
 						prompt_handle:close()
 
-						local escaped_prompt_file = vim.fn.shellescape(prompt_file)
-						local escaped_temp_file = vim.fn.shellescape(temp_file)
-						local command = string.format("cat %s %s | claude", escaped_prompt_file, escaped_temp_file)
-						M.create_claude_terminal(command, "Help me fix this error", temp_file)
+						-- Merge prompt and content into single file for Claude
+						local merged_file = string.format("/tmp/nvim_claude_merged_error_%s.txt", session_id)
+						local merge_cmd = string.format("cat %s %s > %s", vim.fn.shellescape(prompt_file), vim.fn.shellescape(temp_file), vim.fn.shellescape(merged_file))
+						vim.fn.system(merge_cmd)
+						
+						local command = string.format("claude < %s", vim.fn.shellescape(merged_file))
+						M.create_claude_terminal(command, "Help me fix this error", merged_file)
 
-						-- Clean up prompt file after a delay
+						-- Clean up prompt and temp files after a delay
 						vim.defer_fn(function()
 							pcall(function()
 								os.remove(prompt_file)
+								os.remove(temp_file)
 							end)
 						end, 1000)
 					else
@@ -370,9 +388,20 @@ function M.setup(opts)
 			return
 		end
 
-		-- Create a floating window to display the list
+		-- Create a vertical split to display the list
+		vim.cmd("vsplit")
+		vim.cmd("wincmd L") -- Move to the rightmost position
+		
+		-- Set window width to 40% of screen
+		local width = math.floor(vim.o.columns * 0.4)
+		vim.cmd("vertical resize " .. width)
+		
 		local buf = vim.api.nvim_create_buf(false, true)
-
+		local win = vim.api.nvim_get_current_win()
+		
+		-- Set buffer in the window
+		vim.api.nvim_win_set_buf(win, buf)
+		
 		-- Build content for the buffer
 		local content = {}
 		table.insert(content, "Active Claude Terminals (" .. #active_terminals .. ")")
@@ -385,56 +414,33 @@ function M.setup(opts)
 		end
 
 		table.insert(content, "")
-		table.insert(content, "Press number to select, or Esc to cancel")
+		table.insert(content, "Press number or Enter to select, q to cancel")
 
 		-- Set buffer content
 		vim.api.nvim_buf_set_lines(buf, 0, -1, false, content)
 		vim.bo[buf].modifiable = false
-
-		-- Create floating window
-		local width = math.floor(vim.o.columns * 0.6)
-		local height = #content + 2
-		local row = math.floor((vim.o.lines - height) / 2)
-		local col = math.floor((vim.o.columns - width) / 2)
-
-		local list_window_config = {
-			relative = "editor",
-			width = width,
-			height = height,
-			row = row,
-			col = col,
-			style = "minimal",
-			border = "rounded",
-			title = " Claude Terminals ",
-			title_pos = "center",
-		}
-
-		local win = vim.api.nvim_open_win(buf, true, list_window_config)
+		
+		-- Set window title
+		vim.wo[win].statusline = "%#Title# Claude Terminals %#Normal#"
 
 		-- Set up key mappings for selection
 		local function close_and_select(choice_num)
 			vim.api.nvim_win_close(win, true)
 			if choice_num and active_terminals[choice_num] then
 				local selected = active_terminals[choice_num]
-				-- Create new floating window for existing terminal
-				local term_width = math.floor(vim.o.columns * 0.8)
-				local term_height = math.floor(vim.o.lines * 0.8)
-				local term_row = math.floor((vim.o.lines - term_height) / 2)
-				local term_col = math.floor((vim.o.columns - term_width) / 2)
-
-				local terminal_window_config = {
-					relative = "editor",
-					width = term_width,
-					height = term_height,
-					row = term_row,
-					col = term_col,
-					style = "minimal",
-					border = "rounded",
-					title = " Claude Processing: " .. selected.prompt .. " ",
-					title_pos = "center",
-				}
-
-				vim.api.nvim_open_win(selected.buf, true, terminal_window_config)
+				-- Create new vertical split for existing terminal
+				vim.cmd("vsplit")
+				vim.cmd("wincmd L") -- Move to the rightmost position
+				
+				-- Set window width to 40% of screen
+				local width = math.floor(vim.o.columns * 0.4)
+				vim.cmd("vertical resize " .. width)
+				
+				local win = vim.api.nvim_get_current_win()
+				vim.api.nvim_win_set_buf(win, selected.buf)
+				
+				-- Set window title
+				vim.wo[win].statusline = "%#Title# Claude: " .. selected.prompt .. " %#Normal#"
 
 				-- Set up keymaps for the reconnected window
 				vim.keymap.set("n", "q", "<cmd>close<cr>", { buffer = selected.buf, noremap = true, silent = true })
@@ -448,6 +454,17 @@ function M.setup(opts)
 				close_and_select(i)
 			end, { buffer = buf, noremap = true, silent = true })
 		end
+
+		-- Enter key to select terminal based on cursor line
+		vim.keymap.set("n", "<CR>", function()
+			local line_num = vim.api.nvim_win_get_cursor(win)[1]
+			-- Find which terminal corresponds to this line
+			-- Lines 1-3 are header, terminal entries start at line 4
+			local terminal_index = line_num - 3
+			if terminal_index >= 1 and terminal_index <= #active_terminals then
+				close_and_select(terminal_index)
+			end
+		end, { buffer = buf, noremap = true, silent = true })
 
 		vim.keymap.set("n", "q", function()
 			vim.api.nvim_win_close(win, true)
@@ -531,16 +548,20 @@ function M.setup(opts)
 					prompt_handle:write(prompt .. ":\n\n")
 					prompt_handle:close()
 
-					local escaped_prompt_file = vim.fn.shellescape(prompt_file)
-					local escaped_temp_file = vim.fn.shellescape(temp_file)
-					local command = string.format("cat %s %s | claude", escaped_prompt_file, escaped_temp_file)
+					-- Merge prompt and content into single file for Claude
+					local merged_file = string.format("/tmp/nvim_claude_merged_ask_%s.txt", session_id)
+					local merge_cmd = string.format("cat %s %s > %s", vim.fn.shellescape(prompt_file), vim.fn.shellescape(temp_file), vim.fn.shellescape(merged_file))
+					vim.fn.system(merge_cmd)
+					
+					local command = string.format("claude < %s", vim.fn.shellescape(merged_file))
 					local display_prompt = has_selection and (prompt .. " (selection)") or (prompt .. " (buffer)")
-					M.create_claude_terminal(command, display_prompt, temp_file)
+					M.create_claude_terminal(command, display_prompt, merged_file)
 
-					-- Clean up prompt file after a delay
+					-- Clean up prompt and temp files after a delay
 					vim.defer_fn(function()
 						pcall(function()
 							os.remove(prompt_file)
+							os.remove(temp_file)
 						end)
 					end, 1000)
 				else
