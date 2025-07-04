@@ -1,6 +1,6 @@
 # kaipo-claude-code.nvim
 
-[![Version](https://img.shields.io/badge/version-0.3.2-blue.svg)](README.md)
+[![Version](https://img.shields.io/badge/version-0.3.2-blue.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A Neovim plugin for seamless Claude Code integration with split terminal windows.
@@ -47,11 +47,13 @@ use {
 ### Manual Installation
 
 1. Clone this repository to your Neovim configuration directory:
+
    ```bash
    git clone https://github.com/kakapo1933/kaipo-claude-code.nvim.git ~/.config/nvim/pack/plugins/start/kaipo-claude-code.nvim
    ```
 
 2. Add to your `init.lua`:
+
    ```lua
    require("claude").setup()
    ```
@@ -108,7 +110,6 @@ When a Claude window appears (split or floating):
 
 1. **Terminal Mode** (default): You can see Claude's live output
    - Press `<Esc>` to enter normal mode
-   
 2. **Normal Mode**: Navigate and control the window
    - Press `q` to close the window
    - Use standard Vim commands (`:close`, `<C-w>c`, etc.)
@@ -134,11 +135,13 @@ require("claude").setup({
 You can configure the default window position in three ways:
 
 1. **Set globally in your init.lua:**
+
 ```lua
 vim.g.claude_split_position = "floating"  -- Options: "left", "right", "bottom", "floating"
 ```
 
 2. **Change dynamically using commands:**
+
 ```vim
 :ClaudePosition floating
 :ClaudePositionLeft
@@ -148,20 +151,23 @@ vim.g.claude_split_position = "floating"  -- Options: "left", "right", "bottom",
 ```
 
 3. **Using keymaps:**
+
 - `<leader>Cpl` - Position left
-- `<leader>Cpr` - Position right  
+- `<leader>Cpr` - Position right
 - `<leader>Cpb` - Position bottom
 - `<leader>Cpf` - Position floating
 
 The default position is "right". Your preference will be saved across sessions when changed via commands.
 
-#### Position Types:
+#### Position Types
+
 - **left/right/bottom**: Split windows at 40% size
 - **floating**: Centered floating window at 80% size with rounded border
 
 ## Key Features
 
 ### Flexible Window Interface
+
 - **Split Windows**: Clean split windows (left, right, bottom) at 40% size
 - **Floating Windows**: Centered floating windows with rounded borders at 80% size
 - **Configurable Position**: Choose your preferred window style
@@ -170,18 +176,21 @@ The default position is "right". Your preference will be saved across sessions w
 - Consistent behavior across all position types
 
 ### Terminal Management
+
 - Track multiple concurrent Claude sessions
 - Reconnect to background terminals
 - Automatic cleanup of finished processes
 - Session age tracking
 
 ### Which-Key Integration
+
 - Automatic integration with which-key.nvim for organized keybinding display
 - Groups commands under `<leader>C` with proper labeling
 - Position commands grouped under `<leader>Cp` submenu
 - Works with lazy loading and immediate registration
 
 ### Security Features
+
 - Sanitized shell command execution
 - Automatic temporary file cleanup
 - Input validation and error handling
@@ -189,7 +198,9 @@ The default position is "right". Your preference will be saved across sessions w
 ## Troubleshooting
 
 ### Claude Code Not Found
+
 The plugin automatically searches for Claude Code in these locations:
+
 - `~/.claude/local/claude` (default Claude installer location)
 - `~/.local/bin/claude`
 - `/usr/local/bin/claude`
@@ -197,19 +208,24 @@ The plugin automatically searches for Claude Code in these locations:
 - `/usr/bin/claude`
 
 If Claude Code is installed elsewhere:
+
 1. Add it to your PATH: `export PATH="$PATH:/path/to/claude/directory"`
 2. Or create a symlink: `ln -s /actual/path/to/claude ~/.local/bin/claude`
 
-To install Claude Code: https://claude.ai/code
+To install Claude Code: <https://claude.ai/code>
 
 ### Permission Issues
+
 Ensure the temporary directory (`/tmp`) is writable:
+
 ```bash
 ls -la /tmp
 ```
 
 ### TTY/Terminal Issues
+
 If you encounter "Raw mode is not supported" errors:
+
 - This plugin has been updated to work without TTY requirements
 - The plugin now uses file-based input instead of pipes
 - If issues persist, ensure you're running Neovim in a proper terminal
