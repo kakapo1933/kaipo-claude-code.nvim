@@ -1,0 +1,17 @@
+# macOS
+.DS_Store
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Neovim
+.netrwhist
+
+# Lua
+*.luac
+
+# Temporary files
+*.tmp
+*.temp
