@@ -15,6 +15,30 @@ local claude_executable = nil
 -- Configuration for split position
 M.split_position = vim.g.claude_split_position or "right" -- Options: "left", "right", "bottom"
 
+-- Helper function to create and position split window
+local function create_positioned_split()
+	-- Create split based on position setting
+	if M.split_position == "left" then
+		vim.cmd("vsplit")
+		vim.cmd("wincmd h") -- Move cursor to the left window
+	elseif M.split_position == "right" then
+		vim.cmd("vsplit")
+		vim.cmd("wincmd L") -- Move to the rightmost position
+	elseif M.split_position == "bottom" then
+		vim.cmd("split")
+		vim.cmd("wincmd J") -- Move to the bottom
+	end
+	
+	-- Set window size to 40% of screen
+	if M.split_position == "bottom" then
+		local height = math.floor(vim.o.lines * 0.4)
+		vim.cmd("resize " .. height)
+	else
+		local width = math.floor(vim.o.columns * 0.4)
+		vim.cmd("vertical resize " .. width)
+	end
+end
+
 -- Check if Claude Code is installed
 local function check_claude_code()
 	-- First check if 'claude' command is directly available
@@ -50,26 +74,8 @@ function M.create_claude_terminal(command, prompt, temp_file)
 	-- Save current window
 	local current_win = vim.api.nvim_get_current_win()
 	
-	-- Create split based on position setting
-	if M.split_position == "left" then
-		vim.cmd("vsplit")
-		vim.cmd("wincmd h") -- Move cursor to the left window
-	elseif M.split_position == "right" then
-		vim.cmd("vsplit")
-		vim.cmd("wincmd L") -- Move to the rightmost position
-	elseif M.split_position == "bottom" then
-		vim.cmd("split")
-		vim.cmd("wincmd J") -- Move to the bottom
-	end
-	
-	-- Set window size to 40% of screen
-	if M.split_position == "bottom" then
-		local height = math.floor(vim.o.lines * 0.4)
-		vim.cmd("resize " .. height)
-	else
-		local width = math.floor(vim.o.columns * 0.4)
-		vim.cmd("vertical resize " .. width)
-	end
+	-- Create and position split window
+	create_positioned_split()
 	
 	local buf = vim.api.nvim_create_buf(false, true)
 	local win = vim.api.nvim_get_current_win()
@@ -426,26 +432,8 @@ function M.setup(opts)
 			return
 		end
 
-		-- Create split based on position setting
-		if M.split_position == "left" then
-			vim.cmd("vsplit")
-			vim.cmd("wincmd h") -- Move cursor to the left window
-		elseif M.split_position == "right" then
-			vim.cmd("vsplit")
-			vim.cmd("wincmd L") -- Move to the rightmost position
-		elseif M.split_position == "bottom" then
-			vim.cmd("split")
-			vim.cmd("wincmd J") -- Move to the bottom
-		end
-		
-		-- Set window size to 40% of screen
-		if M.split_position == "bottom" then
-			local height = math.floor(vim.o.lines * 0.4)
-			vim.cmd("resize " .. height)
-		else
-			local width = math.floor(vim.o.columns * 0.4)
-			vim.cmd("vertical resize " .. width)
-		end
+		-- Create and position split window
+		create_positioned_split()
 		
 		local buf = vim.api.nvim_create_buf(false, true)
 		local win = vim.api.nvim_get_current_win()
@@ -479,26 +467,8 @@ function M.setup(opts)
 			vim.api.nvim_win_close(win, true)
 			if choice_num and active_terminals[choice_num] then
 				local selected = active_terminals[choice_num]
-				-- Create split based on position setting
-				if M.split_position == "left" then
-					vim.cmd("vsplit")
-					vim.cmd("wincmd h") -- Move cursor to the left window
-				elseif M.split_position == "right" then
-					vim.cmd("vsplit")
-					vim.cmd("wincmd L") -- Move to the rightmost position
-				elseif M.split_position == "bottom" then
-					vim.cmd("split")
-					vim.cmd("wincmd J") -- Move to the bottom
-				end
-				
-				-- Set window size to 40% of screen
-				if M.split_position == "bottom" then
-					local height = math.floor(vim.o.lines * 0.4)
-					vim.cmd("resize " .. height)
-				else
-					local width = math.floor(vim.o.columns * 0.4)
-					vim.cmd("vertical resize " .. width)
-				end
+				-- Create and position split window
+				create_positioned_split()
 				
 				local win = vim.api.nvim_get_current_win()
 				vim.api.nvim_win_set_buf(win, selected.buf)
