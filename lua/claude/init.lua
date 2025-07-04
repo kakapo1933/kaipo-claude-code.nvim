@@ -12,6 +12,9 @@ local claude_terminals = _G.claude_terminals
 -- Store the path to claude executable
 local claude_executable = nil
 
+-- Configuration for split position
+M.split_position = vim.g.claude_split_position or "right" -- Options: "left", "right", "bottom"
+
 -- Check if Claude Code is installed
 local function check_claude_code()
 	-- First check if 'claude' command is directly available
@@ -42,18 +45,31 @@ local function check_claude_code()
 	return false
 end
 
--- Function to create a vertical split terminal window for Claude processing
+-- Function to create a split terminal window for Claude processing
 function M.create_claude_terminal(command, prompt, temp_file)
 	-- Save current window
 	local current_win = vim.api.nvim_get_current_win()
 	
-	-- Create a vertical split on the right
-	vim.cmd("vsplit")
-	vim.cmd("wincmd L") -- Move to the rightmost position
+	-- Create split based on position setting
+	if M.split_position == "left" then
+		vim.cmd("vsplit")
+		vim.cmd("wincmd h") -- Move cursor to the left window
+	elseif M.split_position == "right" then
+		vim.cmd("vsplit")
+		vim.cmd("wincmd L") -- Move to the rightmost position
+	elseif M.split_position == "bottom" then
+		vim.cmd("split")
+		vim.cmd("wincmd J") -- Move to the bottom
+	end
 	
-	-- Set window width to 40% of screen
-	local width = math.floor(vim.o.columns * 0.4)
-	vim.cmd("vertical resize " .. width)
+	-- Set window size to 40% of screen
+	if M.split_position == "bottom" then
+		local height = math.floor(vim.o.lines * 0.4)
+		vim.cmd("resize " .. height)
+	else
+		local width = math.floor(vim.o.columns * 0.4)
+		vim.cmd("vertical resize " .. width)
+	end
 	
 	local buf = vim.api.nvim_create_buf(false, true)
 	local win = vim.api.nvim_get_current_win()
@@ -410,13 +426,26 @@ function M.setup(opts)
 			return
 		end
 
-		-- Create a vertical split to display the list
-		vim.cmd("vsplit")
-		vim.cmd("wincmd L") -- Move to the rightmost position
+		-- Create split based on position setting
+		if M.split_position == "left" then
+			vim.cmd("vsplit")
+			vim.cmd("wincmd h") -- Move cursor to the left window
+		elseif M.split_position == "right" then
+			vim.cmd("vsplit")
+			vim.cmd("wincmd L") -- Move to the rightmost position
+		elseif M.split_position == "bottom" then
+			vim.cmd("split")
+			vim.cmd("wincmd J") -- Move to the bottom
+		end
 		
-		-- Set window width to 40% of screen
-		local width = math.floor(vim.o.columns * 0.4)
-		vim.cmd("vertical resize " .. width)
+		-- Set window size to 40% of screen
+		if M.split_position == "bottom" then
+			local height = math.floor(vim.o.lines * 0.4)
+			vim.cmd("resize " .. height)
+		else
+			local width = math.floor(vim.o.columns * 0.4)
+			vim.cmd("vertical resize " .. width)
+		end
 		
 		local buf = vim.api.nvim_create_buf(false, true)
 		local win = vim.api.nvim_get_current_win()
@@ -450,13 +479,26 @@ function M.setup(opts)
 			vim.api.nvim_win_close(win, true)
 			if choice_num and active_terminals[choice_num] then
 				local selected = active_terminals[choice_num]
-				-- Create new vertical split for existing terminal
-				vim.cmd("vsplit")
-				vim.cmd("wincmd L") -- Move to the rightmost position
+				-- Create split based on position setting
+				if M.split_position == "left" then
+					vim.cmd("vsplit")
+					vim.cmd("wincmd h") -- Move cursor to the left window
+				elseif M.split_position == "right" then
+					vim.cmd("vsplit")
+					vim.cmd("wincmd L") -- Move to the rightmost position
+				elseif M.split_position == "bottom" then
+					vim.cmd("split")
+					vim.cmd("wincmd J") -- Move to the bottom
+				end
 				
-				-- Set window width to 40% of screen
-				local width = math.floor(vim.o.columns * 0.4)
-				vim.cmd("vertical resize " .. width)
+				-- Set window size to 40% of screen
+				if M.split_position == "bottom" then
+					local height = math.floor(vim.o.lines * 0.4)
+					vim.cmd("resize " .. height)
+				else
+					local width = math.floor(vim.o.columns * 0.4)
+					vim.cmd("vertical resize " .. width)
+				end
 				
 				local win = vim.api.nvim_get_current_win()
 				vim.api.nvim_win_set_buf(win, selected.buf)
@@ -516,6 +558,11 @@ function M.setup(opts)
 	keymap("n", "<leader>Ck", "<cmd>ClaudeKillAll<cr>", { desc = "[Claude Code] Kill all terminals" })
 	keymap("n", "<leader>Cx", "<cmd>ClaudeExplain<cr>", { desc = "[Claude Code] Explain current line" })
 	keymap("n", "<leader>Cg", "<cmd>ClaudeDebug<cr>", { desc = "[Claude Code] Debug current file" })
+	
+	-- Position control keymaps
+	keymap("n", "<leader>Cpl", "<cmd>ClaudePositionLeft<cr>", { desc = "[Claude Code] Position left" })
+	keymap("n", "<leader>Cpr", "<cmd>ClaudePositionRight<cr>", { desc = "[Claude Code] Position right" })
+	keymap("n", "<leader>Cpb", "<cmd>ClaudePositionBottom<cr>", { desc = "[Claude Code] Position bottom" })
 
 	-- Command for custom Claude prompts
 	vim.api.nvim_create_user_command("ClaudeAsk", function(cmd_opts)
@@ -653,12 +700,51 @@ function M.setup(opts)
 		end
 
 		print(string.format("\n=== Active Claude Terminals (%d) ===", #active_terminals))
+		print(string.format("Current split position: %s", M.split_position))
+		print("--------------------------------------")
 		for i, term in ipairs(active_terminals) do
 			local age_str = string.format("%dm%ds", math.floor(term.age / 60), term.age % 60)
 			print(string.format("%d. %s (running for %s)", i, term.prompt, age_str))
 		end
 		print("======================================")
 	end, { desc = "Show active Claude terminals" })
+
+	-- Commands for changing split position
+	vim.api.nvim_create_user_command("ClaudePosition", function(opts)
+		local position = opts.args:lower()
+		if position == "left" or position == "right" or position == "bottom" then
+			M.split_position = position
+			vim.g.claude_split_position = position -- Persist for future sessions
+			vim.notify(string.format("Claude split position set to: %s", position), vim.log.levels.INFO)
+		else
+			vim.notify("Invalid position. Use: left, right, or bottom", vim.log.levels.ERROR)
+		end
+	end, {
+		nargs = 1,
+		complete = function()
+			return { "left", "right", "bottom" }
+		end,
+		desc = "Set Claude split window position"
+	})
+
+	-- Quick position commands
+	vim.api.nvim_create_user_command("ClaudePositionLeft", function()
+		M.split_position = "left"
+		vim.g.claude_split_position = "left"
+		vim.notify("Claude split position set to: left", vim.log.levels.INFO)
+	end, { desc = "Set Claude split to left" })
+
+	vim.api.nvim_create_user_command("ClaudePositionRight", function()
+		M.split_position = "right"
+		vim.g.claude_split_position = "right"
+		vim.notify("Claude split position set to: right", vim.log.levels.INFO)
+	end, { desc = "Set Claude split to right" })
+
+	vim.api.nvim_create_user_command("ClaudePositionBottom", function()
+		M.split_position = "bottom"
+		vim.g.claude_split_position = "bottom"
+		vim.notify("Claude split position set to: bottom", vim.log.levels.INFO)
+	end, { desc = "Set Claude split to bottom" })
 
 	-- Debug command to check global state
 	vim.api.nvim_create_user_command("ClaudeDebugState", function()
@@ -688,6 +774,7 @@ function M.setup(opts)
 				if ok and wk and wk.add then
 					wk.add({
 						{ "<leader>C", group = "Claude Code", mode = { "n", "v" } },
+						{ "<leader>Cp", group = "Position", mode = "n" },
 					})
 				end
 			end
@@ -699,6 +786,7 @@ function M.setup(opts)
 	if ok and wk and wk.add then
 		wk.add({
 			{ "<leader>C", group = "Claude Code", mode = { "n", "v" } },
+			{ "<leader>Cp", group = "Position", mode = "n" },
 		})
 	end
 end

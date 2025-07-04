@@ -76,6 +76,13 @@ use {
 - `<leader>Cx` - Explain current line
 - `<leader>Cg` - Debug current file
 
+### Position Commands (Claude Code)
+
+- `<leader>Cp` - Position submenu (when using which-key)
+- `<leader>Cpl` - Set split position to left
+- `<leader>Cpr` - Set split position to right
+- `<leader>Cpb` - Set split position to bottom
+
 ### Commands
 
 - `:ClaudeAsk [prompt]` - Send custom prompt with current buffer or selection
@@ -85,6 +92,10 @@ use {
 - `:ClaudeShow` - Show active terminals (display only)
 - `:ClaudeKillAll` - Kill all active Claude terminals
 - `:ClaudeDebugState` - Debug plugin state
+- `:ClaudePosition {position}` - Set split position (left/right/bottom)
+- `:ClaudePositionLeft` - Set split position to left
+- `:ClaudePositionRight` - Set split position to right
+- `:ClaudePositionBottom` - Set split position to bottom
 
 ### Window Controls
 
@@ -113,6 +124,30 @@ require("claude").setup({
 })
 ```
 
+### Split Window Position
+
+You can configure the default split window position in two ways:
+
+1. **Set globally in your init.lua:**
+```lua
+vim.g.claude_split_position = "bottom"  -- Options: "left", "right", "bottom"
+```
+
+2. **Change dynamically using commands:**
+```vim
+:ClaudePosition bottom
+:ClaudePositionLeft
+:ClaudePositionRight
+:ClaudePositionBottom
+```
+
+3. **Using keymaps:**
+- `<leader>Cpl` - Position left
+- `<leader>Cpr` - Position right  
+- `<leader>Cpb` - Position bottom
+
+The default position is "right". Your preference will be saved across sessions when changed via commands.
+
 ## Key Features
 
 ### Split Terminal Interface
@@ -131,6 +166,7 @@ require("claude").setup({
 ### Which-Key Integration
 - Automatic integration with which-key.nvim for organized keybinding display
 - Groups commands under `<leader>C` with proper labeling
+- Position commands grouped under `<leader>Cp` submenu
 - Works with lazy loading and immediate registration
 
 ### Security Features
