@@ -79,9 +79,10 @@ use {
 ### Position Commands (Claude Code)
 
 - `<leader>Cp` - Position submenu (when using which-key)
-- `<leader>Cpl` - Set split position to left
-- `<leader>Cpr` - Set split position to right
-- `<leader>Cpb` - Set split position to bottom
+- `<leader>Cpl` - Set window position to left
+- `<leader>Cpr` - Set window position to right
+- `<leader>Cpb` - Set window position to bottom
+- `<leader>Cpf` - Set window position to floating
 
 ### Commands
 
@@ -92,14 +93,15 @@ use {
 - `:ClaudeShow` - Show active terminals (display only)
 - `:ClaudeKillAll` - Kill all active Claude terminals
 - `:ClaudeDebugState` - Debug plugin state
-- `:ClaudePosition {position}` - Set split position (left/right/bottom)
-- `:ClaudePositionLeft` - Set split position to left
-- `:ClaudePositionRight` - Set split position to right
-- `:ClaudePositionBottom` - Set split position to bottom
+- `:ClaudePosition {position}` - Set window position (left/right/bottom/floating)
+- `:ClaudePositionLeft` - Set window position to left
+- `:ClaudePositionRight` - Set window position to right
+- `:ClaudePositionBottom` - Set window position to bottom
+- `:ClaudePositionFloating` - Set window position to floating
 
 ### Window Controls
 
-When a Claude split window appears:
+When a Claude window appears (split or floating):
 
 1. **Terminal Mode** (default): You can see Claude's live output
    - Press `<Esc>` to enter normal mode
@@ -124,38 +126,45 @@ require("claude").setup({
 })
 ```
 
-### Split Window Position
+### Window Position
 
-You can configure the default split window position in two ways:
+You can configure the default window position in three ways:
 
 1. **Set globally in your init.lua:**
 ```lua
-vim.g.claude_split_position = "bottom"  -- Options: "left", "right", "bottom"
+vim.g.claude_split_position = "floating"  -- Options: "left", "right", "bottom", "floating"
 ```
 
 2. **Change dynamically using commands:**
 ```vim
-:ClaudePosition bottom
+:ClaudePosition floating
 :ClaudePositionLeft
 :ClaudePositionRight
 :ClaudePositionBottom
+:ClaudePositionFloating
 ```
 
 3. **Using keymaps:**
 - `<leader>Cpl` - Position left
 - `<leader>Cpr` - Position right  
 - `<leader>Cpb` - Position bottom
+- `<leader>Cpf` - Position floating
 
 The default position is "right". Your preference will be saved across sessions when changed via commands.
 
+#### Position Types:
+- **left/right/bottom**: Split windows at 40% size
+- **floating**: Centered floating window at 80% size with rounded border
+
 ## Key Features
 
-### Split Terminal Interface
-- Clean, right-side vertical split windows (no more floating windows!)
-- Automatic sizing (40% of editor width)
+### Flexible Window Interface
+- **Split Windows**: Clean split windows (left, right, bottom) at 40% size
+- **Floating Windows**: Centered floating windows with rounded borders at 80% size
+- **Configurable Position**: Choose your preferred window style
 - Terminal mode with easy exit (`Esc` enters normal mode)
 - Press `q` in normal mode to close windows
-- Windows appear on the right side, preserving your code view
+- Consistent behavior across all position types
 
 ### Terminal Management
 - Track multiple concurrent Claude sessions

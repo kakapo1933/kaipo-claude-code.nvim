@@ -12,31 +12,64 @@ local claude_terminals = _G.claude_terminals
 -- Store the path to claude executable
 local claude_executable = nil
 
--- Configuration for split position
-M.split_position = vim.g.claude_split_position or "right" -- Options: "left", "right", "bottom"
+-- Configuration for window position
+M.split_position = vim.g.claude_split_position or "right" -- Options: "left", "right", "bottom", "floating"
 
--- Helper function to create and position split window
-local function create_positioned_split()
-	-- Create split based on position setting
-	if M.split_position == "left" then
-		vim.cmd("vsplit")
-		vim.cmd("wincmd h") -- Move cursor to the left window
-	elseif M.split_position == "right" then
-		vim.cmd("vsplit")
-		vim.cmd("wincmd L") -- Move to the rightmost position
-	elseif M.split_position == "bottom" then
-		vim.cmd("split")
-		vim.cmd("wincmd J") -- Move to the bottom
-	end
-	
-	-- Set window size to 40% of screen
-	if M.split_position == "bottom" then
-		local height = math.floor(vim.o.lines * 0.4)
-		vim.cmd("resize " .. height)
+-- Helper function to create and position window (split or floating)
+local function create_positioned_window(prompt)
+	local buf = vim.api.nvim_create_buf(false, true)
+	local win
+
+	if M.split_position == "floating" then
+		-- Create floating window
+		local width = math.floor(vim.o.columns * 0.8)
+		local height = math.floor(vim.o.lines * 0.8)
+		local row = math.floor((vim.o.lines - height) / 2)
+		local col = math.floor((vim.o.columns - width) / 2)
+
+		local window_config = {
+			relative = "editor",
+			width = width,
+			height = height,
+			row = row,
+			col = col,
+			style = "minimal",
+			border = "rounded",
+			title = " Claude: " .. (prompt or "Processing") .. " ",
+			title_pos = "center",
+		}
+
+		win = vim.api.nvim_open_win(buf, true, window_config)
 	else
-		local width = math.floor(vim.o.columns * 0.4)
-		vim.cmd("vertical resize " .. width)
+		-- Create split based on position setting
+		if M.split_position == "left" then
+			vim.cmd("vsplit")
+			vim.cmd("wincmd h") -- Move cursor to the left window
+		elseif M.split_position == "right" then
+			vim.cmd("vsplit")
+			vim.cmd("wincmd L") -- Move to the rightmost position
+		elseif M.split_position == "bottom" then
+			vim.cmd("split")
+			vim.cmd("wincmd J") -- Move to the bottom
+		end
+
+		-- Set window size to 40% of screen
+		if M.split_position == "bottom" then
+			local height = math.floor(vim.o.lines * 0.4)
+			vim.cmd("resize " .. height)
+		else
+			local width = math.floor(vim.o.columns * 0.4)
+			vim.cmd("vertical resize " .. width)
+		end
+
+		win = vim.api.nvim_get_current_win()
+		vim.api.nvim_win_set_buf(win, buf)
+
+		-- Set window title for splits
+		vim.wo[win].statusline = "%#Title# Claude: " .. (prompt or "Processing") .. " %#Normal#"
 	end
+
+	return win, buf
 end
 
 -- Check if Claude Code is installed
@@ -46,7 +79,7 @@ local function check_claude_code()
 		claude_executable = "claude"
 		return true
 	end
-	
+
 	-- If not found, check common installation paths
 	local home = vim.fn.expand("~")
 	local claude_paths = {
@@ -56,7 +89,7 @@ local function check_claude_code()
 		"/opt/homebrew/bin/claude",
 		"/usr/bin/claude",
 	}
-	
+
 	for _, path in ipairs(claude_paths) do
 		if vim.fn.filereadable(path) == 1 and vim.fn.executable(path) == 1 then
 			claude_executable = path
@@ -64,28 +97,19 @@ local function check_claude_code()
 			return true
 		end
 	end
-	
+
 	vim.notify("Claude Code not found. Install from: https://claude.ai/code", vim.log.levels.ERROR)
 	return false
 end
 
--- Function to create a split terminal window for Claude processing
+-- Function to create a terminal window for Claude processing
 function M.create_claude_terminal(command, prompt, temp_file)
 	-- Save current window
 	local current_win = vim.api.nvim_get_current_win()
-	
-	-- Create and position split window
-	create_positioned_split()
-	
-	local buf = vim.api.nvim_create_buf(false, true)
-	local win = vim.api.nvim_get_current_win()
-	
-	-- Set buffer in the window
-	vim.api.nvim_win_set_buf(win, buf)
-	
-	-- Set window title
-	vim.wo[win].statusline = "%#Title# Claude: " .. prompt .. " %#Normal#"
-	
+
+	-- Create and position window (split or floating)
+	local win, buf = create_positioned_window(prompt)
+
 	-- Key mappings for the terminal
 	vim.keymap.set("n", "q", "<cmd>close<cr>", { buffer = buf, noremap = true, silent = true })
 	vim.keymap.set("t", "<Esc>", "<C-\\><C-n>", { buffer = buf, noremap = true, silent = true })
@@ -117,7 +141,7 @@ function M.create_claude_terminal(command, prompt, temp_file)
 		prompt = prompt,
 		created_at = os.time(),
 		job_id = job_id,
-		pid = vim.fn.jobpid(job_id),
+		pid = vim.fn.jobpid and vim.fn.jobpid(job_id) or nil,
 	}
 
 	-- Enter insert mode to show live output
@@ -155,10 +179,16 @@ function M.send_to_claude(prompt)
 
 				-- Merge prompt and content into single file for Claude
 				local merged_file = string.format("/tmp/nvim_claude_merged_%s.txt", session_id)
-				local merge_cmd = string.format("cat %s %s > %s", vim.fn.shellescape(prompt_file), vim.fn.shellescape(temp_file), vim.fn.shellescape(merged_file))
+				local merge_cmd = string.format(
+					"cat %s %s > %s",
+					vim.fn.shellescape(prompt_file),
+					vim.fn.shellescape(temp_file),
+					vim.fn.shellescape(merged_file)
+				)
 				vim.fn.system(merge_cmd)
-				
-				local command = string.format("%s < %s", vim.fn.shellescape(claude_executable), vim.fn.shellescape(merged_file))
+
+				local command =
+					string.format("%s < %s", vim.fn.shellescape(claude_executable), vim.fn.shellescape(merged_file))
 				M.create_claude_terminal(command, prompt, merged_file)
 
 				-- Clean up prompt and temp files after a delay
@@ -246,10 +276,16 @@ function M.setup(opts)
 
 			-- Merge prompt and file content into single file for Claude
 			local merged_file = string.format("/tmp/nvim_claude_merged_%s.txt", session_id)
-			local merge_cmd = string.format("cat %s %s > %s", vim.fn.shellescape(prompt_file), escaped_filename, vim.fn.shellescape(merged_file))
+			local merge_cmd = string.format(
+				"cat %s %s > %s",
+				vim.fn.shellescape(prompt_file),
+				escaped_filename,
+				vim.fn.shellescape(merged_file)
+			)
 			vim.fn.system(merge_cmd)
-			
-			local command = string.format("%s < %s", vim.fn.shellescape(claude_executable), vim.fn.shellescape(merged_file))
+
+			local command =
+				string.format("%s < %s", vim.fn.shellescape(claude_executable), vim.fn.shellescape(merged_file))
 			M.create_claude_terminal(command, "Review this entire file", merged_file)
 
 			-- Clean up prompt file after a delay
@@ -289,10 +325,16 @@ function M.setup(opts)
 
 					-- Merge prompt and content into single file for Claude
 					local merged_file = string.format("/tmp/nvim_claude_merged_line_%s.txt", session_id)
-					local merge_cmd = string.format("cat %s %s > %s", vim.fn.shellescape(prompt_file), vim.fn.shellescape(temp_file), vim.fn.shellescape(merged_file))
+					local merge_cmd = string.format(
+						"cat %s %s > %s",
+						vim.fn.shellescape(prompt_file),
+						vim.fn.shellescape(temp_file),
+						vim.fn.shellescape(merged_file)
+					)
 					vim.fn.system(merge_cmd)
-					
-					local command = string.format("%s < %s", vim.fn.shellescape(claude_executable), vim.fn.shellescape(merged_file))
+
+					local command =
+						string.format("%s < %s", vim.fn.shellescape(claude_executable), vim.fn.shellescape(merged_file))
 					M.create_claude_terminal(command, "Explain this line of code", merged_file)
 
 					-- Clean up prompt and temp files after a delay
@@ -334,10 +376,16 @@ function M.setup(opts)
 
 			-- Merge prompt and file content into single file for Claude
 			local merged_file = string.format("/tmp/nvim_claude_merged_debug_%s.txt", session_id)
-			local merge_cmd = string.format("cat %s %s > %s", vim.fn.shellescape(prompt_file), vim.fn.shellescape(filename), vim.fn.shellescape(merged_file))
+			local merge_cmd = string.format(
+				"cat %s %s > %s",
+				vim.fn.shellescape(prompt_file),
+				vim.fn.shellescape(filename),
+				vim.fn.shellescape(merged_file)
+			)
 			vim.fn.system(merge_cmd)
-			
-			local command = string.format("%s < %s", vim.fn.shellescape(claude_executable), vim.fn.shellescape(merged_file))
+
+			local command =
+				string.format("%s < %s", vim.fn.shellescape(claude_executable), vim.fn.shellescape(merged_file))
 			M.create_claude_terminal(command, debug_prompt, merged_file)
 
 			-- Clean up prompt file after a delay
@@ -378,10 +426,19 @@ function M.setup(opts)
 
 						-- Merge prompt and content into single file for Claude
 						local merged_file = string.format("/tmp/nvim_claude_merged_error_%s.txt", session_id)
-						local merge_cmd = string.format("cat %s %s > %s", vim.fn.shellescape(prompt_file), vim.fn.shellescape(temp_file), vim.fn.shellescape(merged_file))
+						local merge_cmd = string.format(
+							"cat %s %s > %s",
+							vim.fn.shellescape(prompt_file),
+							vim.fn.shellescape(temp_file),
+							vim.fn.shellescape(merged_file)
+						)
 						vim.fn.system(merge_cmd)
-						
-						local command = string.format("%s < %s", vim.fn.shellescape(claude_executable), vim.fn.shellescape(merged_file))
+
+						local command = string.format(
+							"%s < %s",
+							vim.fn.shellescape(claude_executable),
+							vim.fn.shellescape(merged_file)
+						)
 						M.create_claude_terminal(command, "Help me fix this error", merged_file)
 
 						-- Clean up prompt and temp files after a delay
@@ -432,15 +489,9 @@ function M.setup(opts)
 			return
 		end
 
-		-- Create and position split window
-		create_positioned_split()
-		
-		local buf = vim.api.nvim_create_buf(false, true)
-		local win = vim.api.nvim_get_current_win()
-		
-		-- Set buffer in the window
-		vim.api.nvim_win_set_buf(win, buf)
-		
+		-- Create and position window (split or floating)
+		local win, buf = create_positioned_window("Claude Terminals")
+
 		-- Build content for the buffer
 		local content = {}
 		table.insert(content, "Active Claude Terminals (" .. #active_terminals .. ")")
@@ -458,23 +509,18 @@ function M.setup(opts)
 		-- Set buffer content
 		vim.api.nvim_buf_set_lines(buf, 0, -1, false, content)
 		vim.bo[buf].modifiable = false
-		
-		-- Set window title
-		vim.wo[win].statusline = "%#Title# Claude Terminals %#Normal#"
 
 		-- Set up key mappings for selection
 		local function close_and_select(choice_num)
 			vim.api.nvim_win_close(win, true)
 			if choice_num and active_terminals[choice_num] then
 				local selected = active_terminals[choice_num]
-				-- Create and position split window
-				create_positioned_split()
-				
-				local win = vim.api.nvim_get_current_win()
+				-- Create and position window (split or floating) for existing terminal
+				local win, new_buf = create_positioned_window(selected.prompt)
+
+				-- Replace the new buffer with the existing terminal buffer
 				vim.api.nvim_win_set_buf(win, selected.buf)
-				
-				-- Set window title
-				vim.wo[win].statusline = "%#Title# Claude: " .. selected.prompt .. " %#Normal#"
+				vim.api.nvim_buf_delete(new_buf, { force = true })
 
 				-- Set up keymaps for the reconnected window
 				vim.keymap.set("n", "q", "<cmd>close<cr>", { buffer = selected.buf, noremap = true, silent = true })
@@ -528,11 +574,12 @@ function M.setup(opts)
 	keymap("n", "<leader>Ck", "<cmd>ClaudeKillAll<cr>", { desc = "[Claude Code] Kill all terminals" })
 	keymap("n", "<leader>Cx", "<cmd>ClaudeExplain<cr>", { desc = "[Claude Code] Explain current line" })
 	keymap("n", "<leader>Cg", "<cmd>ClaudeDebug<cr>", { desc = "[Claude Code] Debug current file" })
-	
+
 	-- Position control keymaps
 	keymap("n", "<leader>Cpl", "<cmd>ClaudePositionLeft<cr>", { desc = "[Claude Code] Position left" })
 	keymap("n", "<leader>Cpr", "<cmd>ClaudePositionRight<cr>", { desc = "[Claude Code] Position right" })
 	keymap("n", "<leader>Cpb", "<cmd>ClaudePositionBottom<cr>", { desc = "[Claude Code] Position bottom" })
+	keymap("n", "<leader>Cpf", "<cmd>ClaudePositionFloating<cr>", { desc = "[Claude Code] Position floating" })
 
 	-- Command for custom Claude prompts
 	vim.api.nvim_create_user_command("ClaudeAsk", function(cmd_opts)
@@ -589,10 +636,16 @@ function M.setup(opts)
 
 					-- Merge prompt and content into single file for Claude
 					local merged_file = string.format("/tmp/nvim_claude_merged_ask_%s.txt", session_id)
-					local merge_cmd = string.format("cat %s %s > %s", vim.fn.shellescape(prompt_file), vim.fn.shellescape(temp_file), vim.fn.shellescape(merged_file))
+					local merge_cmd = string.format(
+						"cat %s %s > %s",
+						vim.fn.shellescape(prompt_file),
+						vim.fn.shellescape(temp_file),
+						vim.fn.shellescape(merged_file)
+					)
 					vim.fn.system(merge_cmd)
-					
-					local command = string.format("%s < %s", vim.fn.shellescape(claude_executable), vim.fn.shellescape(merged_file))
+
+					local command =
+						string.format("%s < %s", vim.fn.shellescape(claude_executable), vim.fn.shellescape(merged_file))
 					local display_prompt = has_selection and (prompt .. " (selection)") or (prompt .. " (buffer)")
 					M.create_claude_terminal(command, display_prompt, merged_file)
 
@@ -679,42 +732,48 @@ function M.setup(opts)
 		print("======================================")
 	end, { desc = "Show active Claude terminals" })
 
-	-- Commands for changing split position
+	-- Commands for changing window position
 	vim.api.nvim_create_user_command("ClaudePosition", function(opts)
 		local position = opts.args:lower()
-		if position == "left" or position == "right" or position == "bottom" then
+		if position == "left" or position == "right" or position == "bottom" or position == "floating" then
 			M.split_position = position
 			vim.g.claude_split_position = position -- Persist for future sessions
-			vim.notify(string.format("Claude split position set to: %s", position), vim.log.levels.INFO)
+			vim.notify(string.format("Claude window position set to: %s", position), vim.log.levels.INFO)
 		else
-			vim.notify("Invalid position. Use: left, right, or bottom", vim.log.levels.ERROR)
+			vim.notify("Invalid position. Use: left, right, bottom, or floating", vim.log.levels.ERROR)
 		end
 	end, {
 		nargs = 1,
 		complete = function()
-			return { "left", "right", "bottom" }
+			return { "left", "right", "bottom", "floating" }
 		end,
-		desc = "Set Claude split window position"
+		desc = "Set Claude window position",
 	})
 
 	-- Quick position commands
 	vim.api.nvim_create_user_command("ClaudePositionLeft", function()
 		M.split_position = "left"
 		vim.g.claude_split_position = "left"
-		vim.notify("Claude split position set to: left", vim.log.levels.INFO)
-	end, { desc = "Set Claude split to left" })
+		vim.notify("Claude window position set to: left", vim.log.levels.INFO)
+	end, { desc = "Set Claude window to left" })
 
 	vim.api.nvim_create_user_command("ClaudePositionRight", function()
 		M.split_position = "right"
 		vim.g.claude_split_position = "right"
-		vim.notify("Claude split position set to: right", vim.log.levels.INFO)
-	end, { desc = "Set Claude split to right" })
+		vim.notify("Claude window position set to: right", vim.log.levels.INFO)
+	end, { desc = "Set Claude window to right" })
 
 	vim.api.nvim_create_user_command("ClaudePositionBottom", function()
 		M.split_position = "bottom"
 		vim.g.claude_split_position = "bottom"
-		vim.notify("Claude split position set to: bottom", vim.log.levels.INFO)
-	end, { desc = "Set Claude split to bottom" })
+		vim.notify("Claude window position set to: bottom", vim.log.levels.INFO)
+	end, { desc = "Set Claude window to bottom" })
+
+	vim.api.nvim_create_user_command("ClaudePositionFloating", function()
+		M.split_position = "floating"
+		vim.g.claude_split_position = "floating"
+		vim.notify("Claude window position set to: floating", vim.log.levels.INFO)
+	end, { desc = "Set Claude window to floating" })
 
 	-- Debug command to check global state
 	vim.api.nvim_create_user_command("ClaudeDebugState", function()
@@ -750,7 +809,7 @@ function M.setup(opts)
 			end
 		end,
 	})
-	
+
 	-- Also try immediate registration in case which-key is already loaded
 	local ok, wk = pcall(require, "which-key")
 	if ok and wk and wk.add then
@@ -762,4 +821,3 @@ function M.setup(opts)
 end
 
 return M
-
