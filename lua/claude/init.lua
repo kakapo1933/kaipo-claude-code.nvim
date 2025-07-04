@@ -9,15 +9,37 @@ if not _G.claude_terminals then
 end
 local claude_terminals = _G.claude_terminals
 
+-- Store the path to claude executable
+local claude_executable = nil
+
 -- Check if Claude Code is installed
 local function check_claude_code()
-	-- Use vim.system for better security and error handling
-	local result = vim.system({ "which", "claude" }):wait()
-	if result.code ~= 0 then
-		vim.notify("Claude Code not found. Install from: https://claude.ai/code", vim.log.levels.ERROR)
-		return false
+	-- First check if 'claude' command is directly available
+	if vim.fn.executable("claude") == 1 then
+		claude_executable = "claude"
+		return true
 	end
-	return true
+	
+	-- If not found, check common installation paths
+	local home = vim.fn.expand("~")
+	local claude_paths = {
+		home .. "/.claude/local/claude",
+		home .. "/.local/bin/claude",
+		"/usr/local/bin/claude",
+		"/opt/homebrew/bin/claude",
+		"/usr/bin/claude",
+	}
+	
+	for _, path in ipairs(claude_paths) do
+		if vim.fn.filereadable(path) == 1 and vim.fn.executable(path) == 1 then
+			claude_executable = path
+			vim.notify("Claude Code found at: " .. path, vim.log.levels.INFO)
+			return true
+		end
+	end
+	
+	vim.notify("Claude Code not found. Install from: https://claude.ai/code", vim.log.levels.ERROR)
+	return false
 end
 
 -- Function to create a vertical split terminal window for Claude processing
@@ -114,7 +136,7 @@ function M.send_to_claude(prompt)
 				local merge_cmd = string.format("cat %s %s > %s", vim.fn.shellescape(prompt_file), vim.fn.shellescape(temp_file), vim.fn.shellescape(merged_file))
 				vim.fn.system(merge_cmd)
 				
-				local command = string.format("claude < %s", vim.fn.shellescape(merged_file))
+				local command = string.format("%s < %s", vim.fn.shellescape(claude_executable), vim.fn.shellescape(merged_file))
 				M.create_claude_terminal(command, prompt, merged_file)
 
 				-- Clean up prompt and temp files after a delay
@@ -205,7 +227,7 @@ function M.setup(opts)
 			local merge_cmd = string.format("cat %s %s > %s", vim.fn.shellescape(prompt_file), escaped_filename, vim.fn.shellescape(merged_file))
 			vim.fn.system(merge_cmd)
 			
-			local command = string.format("claude < %s", vim.fn.shellescape(merged_file))
+			local command = string.format("%s < %s", vim.fn.shellescape(claude_executable), vim.fn.shellescape(merged_file))
 			M.create_claude_terminal(command, "Review this entire file", merged_file)
 
 			-- Clean up prompt file after a delay
@@ -248,7 +270,7 @@ function M.setup(opts)
 					local merge_cmd = string.format("cat %s %s > %s", vim.fn.shellescape(prompt_file), vim.fn.shellescape(temp_file), vim.fn.shellescape(merged_file))
 					vim.fn.system(merge_cmd)
 					
-					local command = string.format("claude < %s", vim.fn.shellescape(merged_file))
+					local command = string.format("%s < %s", vim.fn.shellescape(claude_executable), vim.fn.shellescape(merged_file))
 					M.create_claude_terminal(command, "Explain this line of code", merged_file)
 
 					-- Clean up prompt and temp files after a delay
@@ -293,7 +315,7 @@ function M.setup(opts)
 			local merge_cmd = string.format("cat %s %s > %s", vim.fn.shellescape(prompt_file), vim.fn.shellescape(filename), vim.fn.shellescape(merged_file))
 			vim.fn.system(merge_cmd)
 			
-			local command = string.format("claude < %s", vim.fn.shellescape(merged_file))
+			local command = string.format("%s < %s", vim.fn.shellescape(claude_executable), vim.fn.shellescape(merged_file))
 			M.create_claude_terminal(command, debug_prompt, merged_file)
 
 			-- Clean up prompt file after a delay
@@ -337,7 +359,7 @@ function M.setup(opts)
 						local merge_cmd = string.format("cat %s %s > %s", vim.fn.shellescape(prompt_file), vim.fn.shellescape(temp_file), vim.fn.shellescape(merged_file))
 						vim.fn.system(merge_cmd)
 						
-						local command = string.format("claude < %s", vim.fn.shellescape(merged_file))
+						local command = string.format("%s < %s", vim.fn.shellescape(claude_executable), vim.fn.shellescape(merged_file))
 						M.create_claude_terminal(command, "Help me fix this error", merged_file)
 
 						-- Clean up prompt and temp files after a delay
@@ -553,7 +575,7 @@ function M.setup(opts)
 					local merge_cmd = string.format("cat %s %s > %s", vim.fn.shellescape(prompt_file), vim.fn.shellescape(temp_file), vim.fn.shellescape(merged_file))
 					vim.fn.system(merge_cmd)
 					
-					local command = string.format("claude < %s", vim.fn.shellescape(merged_file))
+					local command = string.format("%s < %s", vim.fn.shellescape(claude_executable), vim.fn.shellescape(merged_file))
 					local display_prompt = has_selection and (prompt .. " (selection)") or (prompt .. " (buffer)")
 					M.create_claude_terminal(command, display_prompt, merged_file)
 

@@ -13,7 +13,9 @@ A Neovim plugin for seamless Claude Code integration with split terminal windows
 ## Requirements
 
 - Neovim 0.8.0+
-- [Claude Code](https://claude.ai/code) installed and configured
+- [Claude Code](https://claude.ai/code) installed and accessible
+  - The plugin will automatically detect Claude Code in common installation paths
+  - Supported locations: `~/.claude/local/claude`, `~/.local/bin/claude`, `/usr/local/bin/claude`, etc.
 
 ## Installation
 
@@ -114,10 +116,11 @@ require("claude").setup({
 ## Key Features
 
 ### Split Terminal Interface
-- Clean, right-side vertical split windows
+- Clean, right-side vertical split windows (no more floating windows!)
 - Automatic sizing (40% of editor width)
 - Terminal mode with easy exit (`Esc` enters normal mode)
 - Press `q` in normal mode to close windows
+- Windows appear on the right side, preserving your code view
 
 ### Terminal Management
 - Track multiple concurrent Claude sessions
@@ -138,8 +141,18 @@ require("claude").setup({
 ## Troubleshooting
 
 ### Claude Code Not Found
-Make sure Claude Code is installed and in your PATH:
-Download and install from: https://claude.ai/code
+The plugin automatically searches for Claude Code in these locations:
+- `~/.claude/local/claude` (default Claude installer location)
+- `~/.local/bin/claude`
+- `/usr/local/bin/claude`
+- `/opt/homebrew/bin/claude` (Homebrew on macOS)
+- `/usr/bin/claude`
+
+If Claude Code is installed elsewhere:
+1. Add it to your PATH: `export PATH="$PATH:/path/to/claude/directory"`
+2. Or create a symlink: `ln -s /actual/path/to/claude ~/.local/bin/claude`
+
+To install Claude Code: https://claude.ai/code
 
 ### Permission Issues
 Ensure the temporary directory (`/tmp`) is writable:
