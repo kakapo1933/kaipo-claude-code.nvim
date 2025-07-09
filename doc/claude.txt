@@ -8,18 +8,61 @@ A Neovim plugin for integrating Claude Code into your workflow.
 CONTENTS                                                    *claude-contents*
 
 1. Introduction ................................ |claude-introduction|
-2. Commands .................................... |claude-commands|
-3. Mappings .................................... |claude-mappings|
+2. Requirements ................................ |claude-requirements|
+3. Installation ................................ |claude-installation|
+4. Commands .................................... |claude-commands|
+5. Mappings .................................... |claude-mappings|
+6. Configuration ............................... |claude-configuration|
+7. Window Positions ............................ |claude-window-positions|
+8. Which-key Integration ....................... |claude-whichkey|
 
 ==============================================================================
 INTRODUCTION                                            *claude-introduction*
 
 This plugin provides integration with Claude Code, allowing you to interact
-with Claude directly from Neovim through right-side split terminal windows.
+with Claude directly from Neovim through configurable terminal windows. You
+can position Claude windows on the left, right, bottom, or as floating
+windows.
+
+Features:
+- Ask Claude questions and get code explanations
+- Multiple window position options
+- Automatic file context inclusion
+- Visual mode support for code selection
+- Resume conversations across sessions
+- Interactive terminal management
+- Which-key integration
+
+==============================================================================
+REQUIREMENTS                                            *claude-requirements*
+
+- Neovim 0.8.0 or later
+- Claude CLI (https://docs.anthropic.com/en/docs/claude-code)
+- Terminal support
+
+==============================================================================
+INSTALLATION                                            *claude-installation*
+
+1. Install the Claude CLI:
+   Visit https://docs.anthropic.com/en/docs/claude-code
+
+2. Install the plugin using your package manager:
+
+   With lazy.nvim:
+   {
+     "kaipochen/claude-code.nvim",
+     dependencies = { "folke/which-key.nvim" }, -- Optional
+     config = function()
+       require("claude").setup({
+         -- Your configuration here
+       })
+     end,
+   }
 
 ==============================================================================
 COMMANDS                                                    *claude-commands*
 
+                                                            *claude-ask-commands*
 :ClaudeAsk {prompt}                                              *:ClaudeAsk*
     Send a custom prompt to Claude.
 
@@ -29,6 +72,27 @@ COMMANDS                                                    *claude-commands*
 :ClaudeDebug                                                    *:ClaudeDebug*
     Debug the current file, focusing on the current line.
 
+                                                       *claude-position-commands*
+:ClaudePosition {position}                                   *:ClaudePosition*
+    Set the default window position. Valid positions:
+    - left: Split window on the left
+    - right: Split window on the right
+    - bottom: Split window at the bottom
+    - floating: Floating window
+
+:ClaudePositionLeft                                      *:ClaudePositionLeft*
+    Set window position to left.
+
+:ClaudePositionRight                                    *:ClaudePositionRight*
+    Set window position to right.
+
+:ClaudePositionBottom                                  *:ClaudePositionBottom*
+    Set window position to bottom.
+
+:ClaudePositionFloating                              *:ClaudePositionFloating*
+    Set window position to floating.
+
+                                                      *claude-management-commands*
 :ClaudeList                                                      *:ClaudeList*
     Show an interactive list of active Claude terminals.
     Press number keys or <Enter> to select, 'q' to close.
@@ -44,6 +108,7 @@ MAPPINGS                                                    *claude-mappings*
 
 Normal mode mappings (default prefix: <leader>C):
 
+                                                          *claude-normal-mappings*
 <leader>Ca    Ask Claude a custom question
 <leader>Cb    Review the entire buffer
 <leader>Ch    Get help with error messages
@@ -52,9 +117,17 @@ Normal mode mappings (default prefix: <leader>C):
 <leader>Ck    Kill all Claude terminals
 <leader>Cx    Explain the current line
 <leader>Cg    Debug the current file
+<leader>Co    Open the directory in Claude
+
+                                                        *claude-position-mappings*
+<leader>Cpl   Set window position to left
+<leader>Cpr   Set window position to right  
+<leader>Cpb   Set window position to bottom
+<leader>Cpf   Set window position to floating
 
 Visual mode mappings:
 
+                                                          *claude-visual-mappings*
 <leader>Ce    Explain the selected code
 <leader>Cr    Review the selected code for bugs/improvements
 <leader>Co    Optimize the selected code
@@ -62,5 +135,80 @@ Visual mode mappings:
 <leader>Ct    Generate unit tests for the selected code
 <leader>Cd    Add documentation/comments to the selected code
 <leader>Cp    Send a custom prompt about the selected code
+
+==============================================================================
+CONFIGURATION                                          *claude-configuration*
+
+Configure the plugin by passing options to the setup function:
+
+    require("claude").setup({
+      command_prefix = "<leader>C",
+      terminal_width = 80,
+      terminal_height = 20,
+      default_position = "right",
+      floating_window = {
+        width = 100,
+        height = 30,
+        border = "rounded",
+      },
+      diagnostics = true,
+    })
+
+Options:
+
+*command_prefix*     (string) Default: "<leader>C"
+    Prefix for all Claude commands.
+
+*terminal_width*     (number) Default: 80
+    Width of split terminal windows.
+
+*terminal_height*    (number) Default: 20
+    Height of bottom split terminal windows.
+
+*default_position*   (string) Default: "right"
+    Default window position. Options: "left", "right", "bottom", "floating"
+
+*floating_window*    (table)
+    Configuration for floating windows:
+    - width: Window width (default: 100)
+    - height: Window height (default: 30)
+    - border: Border style (default: "rounded")
+
+*diagnostics*        (boolean) Default: true
+    Show diagnostics and debug information.
+
+==============================================================================
+WINDOW POSITIONS                                      *claude-window-positions*
+
+The plugin supports multiple window positions:
+
+*Left Split*
+    Opens Claude in a vertical split on the left side.
+    Width: Configured by terminal_width option.
+
+*Right Split*  
+    Opens Claude in a vertical split on the right side.
+    Width: Configured by terminal_width option.
+
+*Bottom Split*
+    Opens Claude in a horizontal split at the bottom.
+    Height: Configured by terminal_height option.
+
+*Floating Window*
+    Opens Claude in a centered floating window.
+    Size: Configured by floating_window options.
+
+You can change the position dynamically using position commands or mappings.
+
+==============================================================================
+WHICH-KEY INTEGRATION                                       *claude-whichkey*
+
+If you have which-key.nvim installed, the plugin automatically registers
+key mappings with descriptive labels:
+
+- Main group (<leader>C): "Claude Code"
+- Position group (<leader>Cp): "Position"
+
+All commands are displayed with helpful descriptions in the which-key popup.
 
 vim:tw=78:ts=8:ft=help:norl:
