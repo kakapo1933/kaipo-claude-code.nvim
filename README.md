@@ -1,16 +1,17 @@
 # kaipo-claude-code.nvim
 
-[![Version](https://img.shields.io/badge/version-0.3.2-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.4.0-blue.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A Neovim plugin for seamless Claude Code integration with split terminal windows.
 
 ## Features
 
-- **Split Terminal Interface**: Clean, right-side split windows for Claude Code interactions (40% width)
+- **Configurable Window Interface**: Choose between split (left/right/bottom) or floating windows for Claude Code interactions
 - **Multiple Task Types**: Built-in prompts for code explanation, review, optimization, refactoring, testing, and documentation
 - **Terminal Management**: List, reconnect to, and manage multiple active Claude sessions
 - **Custom Prompts**: Send any custom prompt to Claude Code with current buffer or selection
+- **Modular Architecture**: Clean separation of concerns with dedicated modules for commands, keymaps, and utilities
 - **Automatic Cleanup**: Temporary files and terminals are cleaned up automatically
 
 ## Requirements
@@ -188,6 +189,13 @@ The default position is "right". Your preference will be saved across sessions w
 - Groups commands under `<leader>C` with proper labeling
 - Position commands grouped under `<leader>Cp` submenu
 - Works with lazy loading and immediate registration
+
+### Modular Architecture
+
+- **Separated concerns**: Commands, keymaps, terminal management, and utilities are in dedicated modules
+- **Configurable**: Centralized configuration system with user-customizable options
+- **Extensible**: Plugin architecture supports easy addition of new features
+- **Maintainable**: Clean code structure with proper separation of business logic
 
 ### Security Features
 

@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2025-07-09
+
+### Added
+- Modular architecture with separated concerns for commands, keymaps, and utilities
+- Centralized configuration system with user-customizable options
+- Enhanced plugin extensibility and maintainability
+
+### Changed
+- Refactored codebase into dedicated modules (commands/, utils/, config.lua, etc.)
+- Improved code organization and separation of business logic
+- Enhanced plugin architecture for easier feature additions
+
+### Improved
+- Code maintainability through clean modular structure
+- Plugin extensibility with better separation of concerns
+- Configuration management with centralized system
+
 ## [0.3.2] - 2025-07-04
 
 ### Added
