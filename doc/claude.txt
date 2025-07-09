@@ -30,7 +30,7 @@ Features:
 - Automatic file context inclusion
 - Visual mode support for code selection
 - Resume conversations across sessions
-- Interactive terminal management
+- Interactive terminal management with smart duplicate prevention
 - Which-key integration
 
 ==============================================================================
@@ -96,6 +96,7 @@ COMMANDS                                                    *claude-commands*
 :ClaudeList                                                      *:ClaudeList*
     Show an interactive list of active Claude terminals.
     Press number keys or <Enter> to select, 'q' to close.
+    Smart session management prevents duplicate windows when reopening sessions.
 
 :ClaudeShow                                                      *:ClaudeShow*
     Display the status of all active Claude terminals.

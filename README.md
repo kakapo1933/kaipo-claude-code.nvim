@@ -1,6 +1,6 @@
 # kaipo-claude-code.nvim
 
-[![Version](https://img.shields.io/badge/version-0.4.1-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.4.2-blue.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A Neovim plugin for seamless Claude Code integration with split terminal windows.
@@ -120,6 +120,7 @@ When a Claude window appears (split or floating):
    - Press number keys (1, 2, 3...) to reconnect to a terminal
    - Press `<Enter>` to select the terminal on the current cursor line
    - Press `q` to cancel and close the list
+   - **Smart Session Management**: Selecting an already open session will focus the existing window instead of creating a duplicate
 
 ## Configuration
 
@@ -179,9 +180,10 @@ The default position is "right". Your preference will be saved across sessions w
 ### Terminal Management
 
 - Track multiple concurrent Claude sessions
-- Reconnect to background terminals
+- Reconnect to background terminals with smart duplicate prevention
 - Automatic cleanup of finished processes
 - Session age tracking
+- **Smart Window Management**: Prevents duplicate windows when reopening the same session
 
 ### Which-Key Integration
 

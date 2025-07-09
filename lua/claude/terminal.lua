@@ -107,11 +107,34 @@ function M.kill_all_terminals()
 	return count
 end
 
--- Reconnect to existing terminal in new window
+-- Find windows displaying a specific buffer
+-- @param buf number: Buffer ID to search for
+-- @return table: Array of window IDs displaying the buffer
+function M.find_windows_for_buffer(buf)
+	local windows = {}
+	for _, win in ipairs(vim.api.nvim_list_wins()) do
+		if vim.api.nvim_win_get_buf(win) == buf then
+			table.insert(windows, win)
+		end
+	end
+	return windows
+end
+
+-- Reconnect to existing terminal, focusing existing window or creating new one
 -- @param terminal_info table: Terminal info from get_active_terminals
 -- @param position string: Window position (optional)
 -- @return number: Window ID
 function M.reconnect_to_terminal(terminal_info, position)
+	-- Check if the terminal buffer is already displayed in any window
+	local existing_windows = M.find_windows_for_buffer(terminal_info.buf)
+	
+	if #existing_windows > 0 then
+		-- Focus the first existing window instead of creating a new one
+		local win = existing_windows[1]
+		vim.api.nvim_set_current_win(win)
+		return win
+	end
+	
 	-- Create and position window for existing terminal
 	local win, new_buf = window_utils.create_positioned_window(terminal_info.prompt, position)
 

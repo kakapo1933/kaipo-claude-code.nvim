@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.2] - 2025-07-09
+
+### Fixed
+- Fixed session management issue where opening existing Claude sessions from ClaudeList would create duplicate windows
+- Session reconnection now properly checks for existing windows and focuses them instead of creating new ones
+- Added `find_windows_for_buffer` helper function to prevent duplicate session windows
+
 ## [0.4.1] - 2025-07-09
 
 ### Changed
