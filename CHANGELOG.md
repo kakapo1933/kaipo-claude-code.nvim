@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2025-07-09
+
+### Changed
+- Updated Vim help documentation (doc/claude.txt) with comprehensive feature coverage
+- Added missing `<leader>Co` mapping documentation for opening directories in Claude
+- Fixed Neovim version requirement inconsistency (now consistently 0.8.0+)
+- Enhanced help file with installation, configuration, and window position sections
+- Added Which-key integration documentation
+
+### Fixed
+- Documentation now properly reflects all current plugin features
+- Help tags properly organized for easy navigation
+
 ## [0.4.0] - 2025-07-09
 
 ### Added
